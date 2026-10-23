@@ -29,9 +29,14 @@ class _AuthGateState extends State<AuthGate> {
   Future<void> _checkInitialAuth() async {
     try {
       final refreshToken = await _localRepo.getRefreshToken();
+      final accessToken = await _localRepo.getAccessToken();
       final cachedUser = await _localRepo.getUser();
 
-      if (refreshToken != null && refreshToken.isNotEmpty) {
+      final bool hasCachedSession = (refreshToken != null && refreshToken.isNotEmpty) ||
+          (accessToken != null && accessToken.isNotEmpty) ||
+          cachedUser != null;
+
+      if (hasCachedSession) {
         if (mounted) {
           setState(() {
             _isAuthenticated = true;
@@ -40,16 +45,19 @@ class _AuthGateState extends State<AuthGate> {
           });
         }
 
-        // Silently validate and refresh session in background
-        _authViewModel.checkAuthAndRefreshToken().then((valid) {
-          if (!valid && mounted) {
-            // Session expired or invalidated on backend
-            setState(() {
-              _isAuthenticated = false;
-              _user = null;
-            });
-          }
-        });
+        // Silently validate and refresh session in background if refreshToken exists
+        if (refreshToken != null && refreshToken.isNotEmpty) {
+          _authViewModel.checkAuthAndRefreshToken().then((status) {
+            // ONLY log out if backend explicitly rejected credentials (HTTP 401/403).
+            // When offline, status is AuthCheckStatus.offline, so user remains logged in!
+            if (status == AuthCheckStatus.unauthorized && mounted) {
+              setState(() {
+                _isAuthenticated = false;
+                _user = null;
+              });
+            }
+          });
+        }
         return;
       }
     } catch (_) {
@@ -70,9 +78,7 @@ class _AuthGateState extends State<AuthGate> {
       return const Scaffold(
         backgroundColor: Pallete.backgroundColor,
         body: Center(
-          child: CircularProgressIndicator(
-            color: Pallete.gradient2,
-          ),
+          child: CircularProgressIndicator(color: Pallete.gradient2),
         ),
       );
     }

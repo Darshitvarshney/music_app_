@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'core/services/download_service.dart';
 import 'core/theme/theme.dart';
 import 'features/auth/view/pages/auth_gate.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize offline downloads service
+  DownloadService.instance.init();
   runApp(const MyApp());
 }
 

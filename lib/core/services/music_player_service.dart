@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../features/auth/repositories/auth_local_repository.dart';
 import '../../features/search/model/song_model.dart';
 import '../../features/search/repositories/search_repository.dart';
+import 'download_service.dart';
 import 'recommendation_service.dart';
 
 class MusicPlayerService extends ChangeNotifier {
@@ -23,11 +25,15 @@ class MusicPlayerService extends ChangeNotifier {
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
 
-  // Autoplay & Telemetry state
+  // Autoplay, Loop & Telemetry state
   bool _autoplayEnabled = true;
+  bool _isLoopEnabled = false;
   bool _isLoadingAutoplay = false;
   SongModel? _activeTelemetrySong;
   bool _completedRecorded = false;
+
+  // Audio engine state tracking
+  String? _loadedSongId;
 
   StreamSubscription? _playerStateSub;
   StreamSubscription? _positionSub;
@@ -44,6 +50,9 @@ class MusicPlayerService extends ChangeNotifier {
       if (lastSong != null && _currentSong == null) {
         _currentSong = lastSong;
         _duration = Duration(seconds: lastSong.duration);
+        _queue = [lastSong];
+        _queueIndex = 0;
+        // _loadedSongId is left null until audio source is actually loaded into _player
         notifyListeners();
       }
     } catch (_) {}
@@ -55,6 +64,7 @@ class MusicPlayerService extends ChangeNotifier {
   bool get hasNext => _queue.isNotEmpty && _queueIndex + 1 < _queue.length;
   bool get hasPrevious => _queue.isNotEmpty && _queueIndex > 0;
   bool get autoplayEnabled => _autoplayEnabled;
+  bool get isLoopEnabled => _isLoopEnabled;
 
   bool get isPlaying => _isPlaying;
   bool get isBuffering => _isBuffering;
@@ -62,7 +72,10 @@ class MusicPlayerService extends ChangeNotifier {
   Duration get duration => _duration;
   double get progressRatio {
     if (_duration.inMilliseconds > 0) {
-      return (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0);
+      return (_position.inMilliseconds / _duration.inMilliseconds).clamp(
+        0.0,
+        1.0,
+      );
     }
     return 0.0;
   }
@@ -72,23 +85,45 @@ class MusicPlayerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setLoopEnabled(bool enabled) async {
+    _isLoopEnabled = enabled;
+    try {
+      await _player.setLoopMode(enabled ? LoopMode.one : LoopMode.off);
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> toggleLoop() async {
+    await setLoopEnabled(!_isLoopEnabled);
+  }
+
   void _initStreams() {
-    _playerStateSub = _player.playerStateStream.listen((state) {
-      final isPlaying = state.playing;
-      final processingState = state.processingState;
+    _playerStateSub = _player.playerStateStream.listen(
+      (state) {
+        final isPlaying = state.playing;
+        final processingState = state.processingState;
 
-      _isPlaying = isPlaying &&
-          processingState != ProcessingState.completed &&
-          processingState != ProcessingState.idle;
+        _isPlaying =
+            isPlaying &&
+            processingState != ProcessingState.completed &&
+            processingState != ProcessingState.idle;
 
-      _isBuffering = processingState == ProcessingState.buffering ||
-          processingState == ProcessingState.loading;
+        _isBuffering =
+            processingState == ProcessingState.buffering ||
+            processingState == ProcessingState.loading;
 
-      if (processingState == ProcessingState.completed) {
-        _handlePlaybackCompleted();
-      }
-      notifyListeners();
-    });
+        if (processingState == ProcessingState.completed) {
+          _handlePlaybackCompleted();
+        }
+        notifyListeners();
+      },
+      onError: (err) {
+        debugPrint('PlayerState stream error: $err');
+        _isBuffering = false;
+        _isPlaying = false;
+        notifyListeners();
+      },
+    );
 
     _positionSub = _player.positionStream.listen((pos) {
       _position = pos;
@@ -113,6 +148,12 @@ class MusicPlayerService extends ChangeNotifier {
         duration: _activeTelemetrySong!.duration,
       );
     }
+    if (_isLoopEnabled && _currentSong != null) {
+      _completedRecorded = false;
+      seek(Duration.zero);
+      _player.play();
+      return;
+    }
     playNext(autoTriggered: true);
   }
 
@@ -131,10 +172,15 @@ class MusicPlayerService extends ChangeNotifier {
     }());
   }
 
-  Future<void> playQueue(List<SongModel> newQueue, {int initialIndex = 0}) async {
+  Future<void> playQueue(
+    List<SongModel> newQueue, {
+    int initialIndex = 0,
+  }) async {
     if (newQueue.isEmpty) return;
     _queue = List<SongModel>.from(newQueue);
-    _queueIndex = (initialIndex >= 0 && initialIndex < _queue.length) ? initialIndex : 0;
+    _queueIndex = (initialIndex >= 0 && initialIndex < _queue.length)
+        ? initialIndex
+        : 0;
     await playSong(_queue[_queueIndex]);
   }
 
@@ -143,16 +189,25 @@ class MusicPlayerService extends ChangeNotifier {
       _queue = List<SongModel>.from(queue);
       final idx = _queue.indexWhere((s) => s.id == song.id);
       _queueIndex = idx != -1 ? idx : 0;
+    } else if (_queue.isEmpty) {
+      _queue = [song];
+      _queueIndex = 0;
     }
 
-    // If the song is already loaded and playable, toggle play/pause
-    if (_currentSong?.id == song.id &&
-        _currentSong?.mediaUrl == song.mediaUrl &&
-        song.mediaUrl.isNotEmpty) {
+    // If the song is already loaded in the audio engine and playable, toggle play/pause
+    final bool isAlreadyLoadedInPlayer =
+        _loadedSongId == song.id &&
+        _player.audioSource != null &&
+        _player.processingState != ProcessingState.idle;
+
+    if (isAlreadyLoadedInPlayer) {
       if (_isPlaying) {
         await pause();
       } else {
-        await resume();
+        if (_player.processingState == ProcessingState.completed) {
+          await _player.seek(Duration.zero);
+        }
+        await _player.play();
       }
       return;
     }
@@ -170,7 +225,8 @@ class MusicPlayerService extends ChangeNotifier {
     }
 
     // Telemetry: If restarting same song from start
-    final isReplay = _activeTelemetrySong?.id == song.id && _position.inSeconds > 0;
+    final isReplay =
+        _activeTelemetrySong?.id == song.id && _position.inSeconds > 0;
 
     SongModel activeSong = song;
     _currentSong = activeSong;
@@ -181,29 +237,79 @@ class MusicPlayerService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (activeSong.mediaUrl.trim().isEmpty) {
-        final resolved = await _searchRepository.resolvePlayableSong(activeSong);
-        if (resolved != null && resolved.mediaUrl.trim().isNotEmpty) {
-          activeSong = activeSong.copyWith(
-            mediaUrl: resolved.mediaUrl,
-            mediaPreviewUrl: resolved.mediaPreviewUrl,
-            duration: resolved.duration > 0 ? resolved.duration : activeSong.duration,
-            image: resolved.image.isNotEmpty ? resolved.image : activeSong.image,
-            permaUrl: resolved.permaUrl.isNotEmpty ? resolved.permaUrl : activeSong.permaUrl,
-          );
-          _currentSong = activeSong;
-          _duration = Duration(seconds: activeSong.duration);
-          if (_queueIndex >= 0 && _queueIndex < _queue.length) {
-            _queue[_queueIndex] = activeSong;
-          }
-          notifyListeners();
+      bool setUrlSuccess = false;
+
+      // 1. Check if song exists locally on device (offline download)
+      final localAudioPath = DownloadService.instance.getLocalAudioPath(activeSong.id) ??
+          (File(activeSong.mediaUrl).existsSync() ? activeSong.mediaUrl : null);
+
+      if (localAudioPath != null && File(localAudioPath).existsSync()) {
+        try {
+          await _player.setFilePath(localAudioPath);
+          setUrlSuccess = true;
+        } catch (e) {
+          debugPrint('Failed to load local file ($e). Falling back to network URL...');
         }
       }
 
-      AuthLocalRepository().saveLastPlayedSong(activeSong);
+      // 2. If no local audio, attempt remote mediaUrl if available
+      if (!setUrlSuccess && activeSong.mediaUrl.trim().startsWith('http')) {
+        try {
+          await _player.setUrl(activeSong.mediaUrl);
+          setUrlSuccess = true;
+        } catch (e) {
+          debugPrint('Stored mediaUrl failed ($e). Re-resolving fresh URL...');
+        }
+      }
 
-      if (activeSong.mediaUrl.trim().isNotEmpty) {
-        await _player.setUrl(activeSong.mediaUrl);
+      // 3. If no mediaUrl or previous setUrl failed (e.g., expired CDN link), fetch fresh URL
+      if (!setUrlSuccess) {
+        try {
+          final resolved = await _searchRepository.resolvePlayableSong(
+            activeSong,
+            forceResolve: true,
+          );
+          if (resolved != null && resolved.mediaUrl.trim().isNotEmpty) {
+            activeSong = activeSong.copyWith(
+              mediaUrl: resolved.mediaUrl,
+              mediaPreviewUrl: resolved.mediaPreviewUrl,
+              duration: resolved.duration > 0
+                  ? resolved.duration
+                  : activeSong.duration,
+              image: resolved.image.isNotEmpty
+                  ? resolved.image
+                  : activeSong.image,
+              permaUrl: resolved.permaUrl.isNotEmpty
+                  ? resolved.permaUrl
+                  : activeSong.permaUrl,
+            );
+            _currentSong = activeSong;
+            _duration = Duration(seconds: activeSong.duration);
+            if (_queueIndex >= 0 && _queueIndex < _queue.length) {
+              _queue[_queueIndex] = activeSong;
+            }
+            notifyListeners();
+
+            if (File(activeSong.mediaUrl).existsSync()) {
+              await _player.setFilePath(activeSong.mediaUrl);
+            } else {
+              await _player.setUrl(activeSong.mediaUrl);
+            }
+            setUrlSuccess = true;
+          }
+        } catch (e) {
+          debugPrint('Network resolve failed ($e). Device may be offline.');
+        }
+      }
+
+      if (setUrlSuccess) {
+        _loadedSongId = activeSong.id;
+        AuthLocalRepository().saveLastPlayedSong(activeSong);
+
+        try {
+          await _player.setLoopMode(_isLoopEnabled ? LoopMode.one : LoopMode.off);
+        } catch (_) {}
+
         await _player.play();
 
         _activeTelemetrySong = activeSong;
@@ -216,13 +322,17 @@ class MusicPlayerService extends ChangeNotifier {
         // Prefetch recommendations if queue is running low
         _checkAndPrefetchAutoplay();
       } else {
-        debugPrint('Could not resolve playable mediaUrl for: ${activeSong.song}');
+        debugPrint(
+          'Could not resolve or play mediaUrl for: ${activeSong.song}',
+        );
+        _loadedSongId = null;
         _isBuffering = false;
         _isPlaying = false;
         notifyListeners();
       }
     } catch (e) {
       debugPrint('Error playing song: $e');
+      _loadedSongId = null;
       _isBuffering = false;
       _isPlaying = false;
       notifyListeners();
@@ -253,7 +363,9 @@ class MusicPlayerService extends ChangeNotifier {
       );
 
       final playable = recommendations
-          .where((r) => r.playbackEligibility.isEligible && r.mediaUrl.isNotEmpty)
+          .where(
+            (r) => r.playbackEligibility.isEligible && r.mediaUrl.isNotEmpty,
+          )
           .map((r) => r.toSongModel())
           .where((s) => !_queue.any((q) => q.id == s.id))
           .toList();
@@ -274,6 +386,14 @@ class MusicPlayerService extends ChangeNotifier {
   }
 
   Future<void> playNext({bool autoTriggered = false}) async {
+    // If autoTriggered and loop is enabled, loop the same song
+    if (autoTriggered && _isLoopEnabled && _currentSong != null) {
+      _completedRecorded = false;
+      await seek(Duration.zero);
+      await _player.play();
+      return;
+    }
+
     // If user manually pressed Next early, track skipped event
     if (!autoTriggered &&
         _activeTelemetrySong != null &&
@@ -313,7 +433,17 @@ class MusicPlayerService extends ChangeNotifier {
   }
 
   Future<void> resume() async {
-    await _player.play();
+    if (_currentSong != null &&
+        (_loadedSongId != _currentSong!.id ||
+            _player.audioSource == null ||
+            _player.processingState == ProcessingState.idle)) {
+      await playSong(_currentSong!);
+    } else {
+      if (_player.processingState == ProcessingState.completed) {
+        await seek(Duration.zero);
+      }
+      await _player.play();
+    }
   }
 
   Future<void> togglePlayPause() async {
@@ -325,6 +455,7 @@ class MusicPlayerService extends ChangeNotifier {
   }
 
   Future<void> seek(Duration position) async {
+    if (_player.audioSource == null) return;
     await _player.seek(position);
   }
 

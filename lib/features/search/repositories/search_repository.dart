@@ -66,8 +66,8 @@ class SearchRepository {
     }
   }
 
-  Future<SongModel?> resolvePlayableSong(SongModel song) async {
-    if (song.mediaUrl.trim().isNotEmpty) {
+  Future<SongModel?> resolvePlayableSong(SongModel song, {bool forceResolve = false}) async {
+    if (!forceResolve && song.mediaUrl.trim().isNotEmpty) {
       return song;
     }
 

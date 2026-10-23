@@ -5,6 +5,12 @@ import '../model/user_model.dart';
 import '../repositories/auth_local_repository.dart';
 import '../repositories/sign_up_in.dart';
 
+enum AuthCheckStatus {
+  authenticated,
+  offline,
+  unauthorized,
+}
+
 class AuthViewModel extends ChangeNotifier {
   final SignUpInRepository _remoteRepository;
   final AuthLocalRepository _localRepository;
@@ -98,19 +104,28 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   /// Validates cached session by checking the refresh token and acquiring a new access token.
-  /// Returns true if successfully authenticated, false otherwise.
-  Future<bool> checkAuthAndRefreshToken() async {
+  /// - Returns [AuthCheckStatus.authenticated] if refreshed successfully.
+  /// - Returns [AuthCheckStatus.offline] if offline or network connection failed (user remains authenticated).
+  /// - Returns [AuthCheckStatus.unauthorized] if the backend explicitly rejected the token (HTTP 401/403).
+  Future<AuthCheckStatus> checkAuthAndRefreshToken() async {
     final refreshToken = await _localRepository.getRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {
+      final cachedUser = await _localRepository.getUser();
+      final accessToken = await _localRepository.getAccessToken();
+      if (cachedUser != null || (accessToken != null && accessToken.isNotEmpty)) {
+        _currentUser = cachedUser;
+        _accessToken = accessToken;
+        return AuthCheckStatus.authenticated;
+      }
       _accessToken = null;
       _currentUser = null;
-      return false;
+      return AuthCheckStatus.unauthorized;
     }
 
     try {
-      final response = await _remoteRepository.refresh(
-        refreshToken: refreshToken,
-      );
+      final response = await _remoteRepository
+          .refresh(refreshToken: refreshToken)
+          .timeout(const Duration(seconds: 8));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(response.body);
@@ -135,20 +150,30 @@ class AuthViewModel extends ChangeNotifier {
             }
 
             notifyListeners();
-            return true;
+            return AuthCheckStatus.authenticated;
           }
         }
       }
 
-      // If refresh failed (token expired/invalidated), clear cached credentials
-      await _localRepository.clear();
-      _accessToken = null;
-      _currentUser = null;
-      notifyListeners();
-      return false;
+      // Only if backend explicitly rejected the token (401 Unauthorized / 403 Forbidden)
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        await _localRepository.clear();
+        _accessToken = null;
+        _currentUser = null;
+        notifyListeners();
+        return AuthCheckStatus.unauthorized;
+      }
+
+      // Temporary server errors (500, 502, 503) -> treat as offline, DO NOT clear user
+      _currentUser ??= await _localRepository.getUser();
+      _accessToken ??= await _localRepository.getAccessToken();
+      return AuthCheckStatus.offline;
     } catch (_) {
-      // In case of network errors during background check, do not necessarily invalidate
-      return false;
+      // In case of network errors (device offline, timeout, no internet),
+      // DO NOT invalidate or log out the user! Keep cached session active!
+      _currentUser ??= await _localRepository.getUser();
+      _accessToken ??= await _localRepository.getAccessToken();
+      return AuthCheckStatus.offline;
     }
   }
 

@@ -122,15 +122,15 @@ class _SearchPageState extends State<SearchPage> {
 
             // Search Bar Input Field
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Container(
                 decoration: BoxDecoration(
                   color: Pallete.cardColor,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: Pallete.borderColor,
-                    width: 1,
-                  ),
+                  border: Border.all(color: Pallete.borderColor, width: 1),
                 ),
                 child: TextField(
                   controller: _searchController,
@@ -138,11 +138,20 @@ class _SearchPageState extends State<SearchPage> {
                   style: const TextStyle(color: Pallete.whiteColor),
                   decoration: InputDecoration(
                     hintText: 'What do you want to listen to?',
-                    hintStyle: const TextStyle(color: Pallete.subtitleText, fontSize: 15),
-                    prefixIcon: const Icon(Icons.search_rounded, color: Pallete.whiteColor),
+                    hintStyle: const TextStyle(
+                      color: Pallete.subtitleText,
+                      fontSize: 15,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: Pallete.whiteColor,
+                    ),
                     suffixIcon: query.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear_rounded, color: Pallete.subtitleText),
+                            icon: const Icon(
+                              Icons.clear_rounded,
+                              color: Pallete.subtitleText,
+                            ),
                             onPressed: () {
                               _searchController.clear();
                               _onSearchChanged('');
@@ -161,9 +170,7 @@ class _SearchPageState extends State<SearchPage> {
             const SizedBox(height: 8),
 
             // Body Content
-            Expanded(
-              child: _buildSearchBody(currentSong, isPlaying),
-            ),
+            Expanded(child: _buildSearchBody(currentSong, isPlaying)),
           ],
         ),
       ),
@@ -173,9 +180,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget _buildSearchBody(SongModel? currentSong, bool isPlaying) {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(
-          color: Pallete.gradient2,
-        ),
+        child: CircularProgressIndicator(color: Pallete.gradient2),
       );
     }
 
@@ -184,7 +189,11 @@ class _SearchPageState extends State<SearchPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.wifi_off_rounded, color: Pallete.errorColor, size: 48),
+            const Icon(
+              Icons.wifi_off_rounded,
+              color: Pallete.errorColor,
+              size: 48,
+            ),
             const SizedBox(height: 12),
             Text(
               _errorMessage,
@@ -196,7 +205,10 @@ class _SearchPageState extends State<SearchPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Pallete.cardColor,
               ),
-              child: const Text('Retry', style: TextStyle(color: Pallete.whiteColor)),
+              child: const Text(
+                'Retry',
+                style: TextStyle(color: Pallete.whiteColor),
+              ),
             ),
           ],
         ),
@@ -212,7 +224,11 @@ class _SearchPageState extends State<SearchPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.music_off_rounded, color: Pallete.subtitleText, size: 50),
+            const Icon(
+              Icons.music_off_rounded,
+              color: Pallete.subtitleText,
+              size: 50,
+            ),
             const SizedBox(height: 12),
             Text(
               'No results found for "${_searchController.text.trim()}"',

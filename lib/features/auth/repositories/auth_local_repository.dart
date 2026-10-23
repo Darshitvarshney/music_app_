@@ -13,7 +13,7 @@ class AuthLocalRepository {
   static const String _deviceIdKey = 'app_device_installation_id';
 
   AuthLocalRepository({FlutterSecureStorage? storage})
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   Future<String> getEffectiveUserId() async {
     final user = await getUser();
@@ -92,4 +92,3 @@ class AuthLocalRepository {
     await _storage.delete(key: _userKey);
   }
 }
-

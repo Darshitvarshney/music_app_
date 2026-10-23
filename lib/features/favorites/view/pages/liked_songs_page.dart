@@ -117,8 +117,11 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                                color: Pallete.whiteColor, size: 22),
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: Pallete.whiteColor,
+                              size: 22,
+                            ),
                             onPressed: () => Navigator.pop(context),
                           ),
                           const Text(
@@ -166,7 +169,10 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(12),
                                 gradient: const LinearGradient(
-                                  colors: [Pallete.gradient1, Pallete.gradient2],
+                                  colors: [
+                                    Pallete.gradient1,
+                                    Pallete.gradient2,
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -274,8 +280,9 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                                         )
                                       : null,
                                   border: InputBorder.none,
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(vertical: 12),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                 ),
                               ),
                             ),
@@ -371,7 +378,10 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                               ),
                             ),
                             onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.search_rounded, color: Colors.white),
+                            icon: const Icon(
+                              Icons.search_rounded,
+                              color: Colors.white,
+                            ),
                             label: const Text(
                               'Find Songs',
                               style: TextStyle(
@@ -406,23 +416,20 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
               // Track List
               if (filteredSongs.isNotEmpty)
                 SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final song = filteredSongs[index];
-                      final isSelected = currentPlayingSong?.id == song.id;
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final song = filteredSongs[index];
+                    final isSelected = currentPlayingSong?.id == song.id;
 
-                      return _buildSongTile(
-                        index: index + 1,
-                        song: song,
-                        isSelected: isSelected,
-                        isPlaying: isPlaying,
-                        onTap: () {
-                          _playerService.playSong(song, queue: filteredSongs);
-                        },
-                      );
-                    },
-                    childCount: filteredSongs.length,
-                  ),
+                    return _buildSongTile(
+                      index: index + 1,
+                      song: song,
+                      isSelected: isSelected,
+                      isPlaying: isPlaying,
+                      onTap: () {
+                        _playerService.playSong(song, queue: filteredSongs);
+                      },
+                    );
+                  }, childCount: filteredSongs.length),
                 ),
 
               // Bottom Loading Indicator / Spacing for Mini Player
@@ -461,124 +468,126 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
         clipBehavior: Clip.antiAlias,
         child: ListTile(
           onTap: onTap,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-        leading: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 22,
-              child: Text(
-                '$index',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: isSelected ? Pallete.gradient2 : Pallete.subtitleText,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(width: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                width: 48,
-                height: 48,
-                color: Pallete.cardColor,
-                child: song.image.isNotEmpty
-                    ? Image.network(
-                        song.image,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => Container(
-                          color: Pallete.borderColor,
-                          child: const Icon(
-                            Icons.music_note_rounded,
-                            color: Pallete.subtitleText,
-                          ),
-                        ),
-                      )
-                    : const Icon(
-                        Icons.music_note_rounded,
-                        color: Pallete.subtitleText,
-                      ),
-              ),
-            ),
-          ],
-        ),
-        title: Text(
-          song.song,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected ? Pallete.gradient2 : Pallete.whiteColor,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 2,
           ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 2.0),
-          child: Text(
-            song.displayArtist,
+          leading: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 22,
+                child: Text(
+                  '$index',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: isSelected
+                        ? Pallete.gradient2
+                        : Pallete.subtitleText,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(width: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  color: Pallete.cardColor,
+                  child: song.image.isNotEmpty
+                      ? Image.network(
+                          song.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            color: Pallete.borderColor,
+                            child: const Icon(
+                              Icons.music_note_rounded,
+                              color: Pallete.subtitleText,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.music_note_rounded,
+                          color: Pallete.subtitleText,
+                        ),
+                ),
+              ),
+            ],
+          ),
+          title: Text(
+            song.song,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Pallete.subtitleText,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+              color: isSelected ? Pallete.gradient2 : Pallete.whiteColor,
             ),
           ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Unlike / Heart Button
-            IconButton(
-              iconSize: 22,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              tooltip: 'Remove from favorites',
-              onPressed: () {
-                _favoritesService.toggleLike(song);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Removed "${song.song}" from Liked Songs'),
-                    action: SnackBarAction(
-                      label: 'Undo',
-                      textColor: Pallete.gradient2,
-                      onPressed: () {
-                        _favoritesService.toggleLike(song);
-                      },
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 2.0),
+            child: Text(
+              song.displayArtist,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: Pallete.subtitleText),
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Unlike / Heart Button
+              IconButton(
+                iconSize: 22,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Remove from favorites',
+                onPressed: () {
+                  _favoritesService.toggleLike(song);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Removed "${song.song}" from Liked Songs'),
+                      action: SnackBarAction(
+                        label: 'Undo',
+                        textColor: Pallete.gradient2,
+                        onPressed: () {
+                          _favoritesService.toggleLike(song);
+                        },
+                      ),
+                      duration: const Duration(seconds: 3),
                     ),
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              },
-              icon: const Icon(
-                Icons.favorite_rounded,
-                color: Pallete.gradient2,
+                  );
+                },
+                icon: const Icon(
+                  Icons.favorite_rounded,
+                  color: Pallete.gradient2,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
 
-            // Duration
-            Text(
-              song.formattedDuration,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Pallete.subtitleText,
+              // Duration
+              Text(
+                song.formattedDuration,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Pallete.subtitleText,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
+              const SizedBox(width: 10),
 
-            // Mini play indicator if active
-            if (isSelected)
-              Icon(
-                isPlaying ? Icons.volume_up_rounded : Icons.pause_rounded,
-                color: Pallete.gradient2,
-                size: 20,
-              ),
-          ],
+              // Mini play indicator if active
+              if (isSelected)
+                Icon(
+                  isPlaying ? Icons.volume_up_rounded : Icons.pause_rounded,
+                  color: Pallete.gradient2,
+                  size: 20,
+                ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

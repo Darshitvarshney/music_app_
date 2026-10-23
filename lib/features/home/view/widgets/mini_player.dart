@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/services/music_player_service.dart';
 import '../../../../core/theme/app_pallete.dart';
-import 'similar_songs_sheet.dart';
+import '../../../search/model/song_model.dart';
+import 'full_screen_player.dart';
 
 class MiniPlayer extends StatefulWidget {
   final String songTitle;
@@ -48,6 +50,14 @@ class _MiniPlayerState extends State<MiniPlayer> {
     }
   }
 
+  void _handleTapToExpand(BuildContext context, SongModel? currentSong) {
+    if (widget.onExpand != null) {
+      widget.onExpand!();
+    } else if (currentSong != null) {
+      FullScreenPlayer.open(context, song: currentSong);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentSong = _player.currentSong;
@@ -58,183 +68,199 @@ class _MiniPlayerState extends State<MiniPlayer> {
     final progress = _player.progressRatio;
     final imageUrl = currentSong?.image ?? '';
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Pallete.cardColor.withAlpha(240),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: Pallete.borderColor.withAlpha(120),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(150),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _handleTapToExpand(context, currentSong),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Pallete.cardColor.withAlpha(240),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Pallete.borderColor.withAlpha(120),
+            width: 1,
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              children: [
-                // Album Art
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
-                    gradient: const LinearGradient(
-                      colors: [Pallete.gradient1, Pallete.gradient2],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(150),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(
+                children: [
+                  // Album Art
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(6),
+                      gradient: const LinearGradient(
+                        colors: [Pallete.gradient1, Pallete.gradient2],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                     ),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => const Icon(
+                    clipBehavior: Clip.antiAlias,
+                    child: imageUrl.isNotEmpty
+                        ? (imageUrl.startsWith('http')
+                            ? Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const Icon(
+                                  Icons.music_note_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              )
+                            : (File(imageUrl).existsSync()
+                                ? Image.file(
+                                    File(imageUrl),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => const Icon(
+                                      Icons.music_note_rounded,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.music_note_rounded,
+                                    color: Colors.white,
+                                    size: 24,
+                                  )))
+                        : const Icon(
                             Icons.music_note_rounded,
                             color: Colors.white,
                             size: 24,
                           ),
-                        )
-                      : const Icon(
-                          Icons.music_note_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                ),
-                const SizedBox(width: 12),
-
-                // Title & Artist
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Pallete.whiteColor,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        artist,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Pallete.subtitleText,
-                        ),
-                      ),
-                    ],
                   ),
-                ),
+                  const SizedBox(width: 12),
 
-                // Like Button
-                IconButton(
-                  tooltip: currentSong != null && _favoritesService.isLiked(currentSong.id)
-                      ? 'Unlike'
-                      : 'Like',
-                  onPressed: () {
-                    if (currentSong != null) {
-                      _favoritesService.toggleLike(currentSong);
-                    }
-                  },
-                  icon: Icon(
-                    currentSong != null && _favoritesService.isLiked(currentSong.id)
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    color: currentSong != null && _favoritesService.isLiked(currentSong.id)
-                        ? Pallete.gradient2
-                        : Pallete.whiteColor,
-                    size: 22,
-                  ),
-                ),
-
-                // Play / Pause / Buffering Button
-                IconButton(
-                  onPressed: () {
-                    if (currentSong != null) {
-                      _player.togglePlayPause();
-                    }
-                  },
-                  icon: isBuffering
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.2,
-                            color: Pallete.gradient2,
+                  // Title & Artist
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Pallete.whiteColor,
                           ),
-                        )
-                      : Icon(
-                          isPlaying
-                              ? Icons.pause_circle_filled_rounded
-                              : Icons.play_circle_fill_rounded,
-                          color: Pallete.whiteColor,
-                          size: 32,
                         ),
+                        const SizedBox(height: 2),
+                        Text(
+                          artist,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Pallete.subtitleText,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Like Button
+                  IconButton(
+                    tooltip:
+                        currentSong != null &&
+                            _favoritesService.isLiked(currentSong.id)
+                        ? 'Unlike'
+                        : 'Like',
+                    onPressed: () {
+                      if (currentSong != null) {
+                        _favoritesService.toggleLike(currentSong);
+                      }
+                    },
+                    icon: Icon(
+                      currentSong != null &&
+                              _favoritesService.isLiked(currentSong.id)
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      color:
+                          currentSong != null &&
+                              _favoritesService.isLiked(currentSong.id)
+                          ? Pallete.gradient2
+                          : Pallete.whiteColor,
+                      size: 22,
+                    ),
+                  ),
+
+                  // Play / Pause / Buffering Button
+                  IconButton(
+                    tooltip: isPlaying ? 'Pause' : 'Play',
+                    onPressed: isBuffering
+                        ? null
+                        : () {
+                            if (currentSong != null) {
+                              _player.togglePlayPause();
+                            }
+                          },
+                    icon: isBuffering
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: Pallete.gradient2,
+                            ),
+                          )
+                        : Icon(
+                            isPlaying
+                                ? Icons.pause_circle_filled_rounded
+                                : Icons.play_circle_fill_rounded,
+                            color: Pallete.whiteColor,
+                            size: 32,
+                          ),
+                  ),
+
+                  // Next Button (when queue has songs or autoplay is active)
+                  if (_player.hasNext || _player.autoplayEnabled)
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      tooltip: 'Next',
+                      icon: const Icon(
+                        Icons.skip_next_rounded,
+                        color: Pallete.whiteColor,
+                        size: 26,
+                      ),
+                      onPressed: () {
+                        _player.playNext();
+                      },
+                    ),
+                ],
+              ),
+            ),
+
+            // Mini Seek / Progress bar
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(10),
+              ),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Pallete.inactiveSeekColor,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  Pallete.gradient2,
                 ),
-
-                // Song Radio / Similar songs discovery button
-                if (currentSong != null)
-                  IconButton(
-                    tooltip: 'Song Radio & Similar Tracks',
-                    icon: const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Pallete.gradient2,
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      SimilarSongsSheet.show(context, currentSong);
-                    },
-                  ),
-
-                // Next Button (when queue has songs or autoplay is active)
-                if (_player.hasNext || _player.autoplayEnabled)
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    tooltip: 'Next',
-                    icon: const Icon(
-                      Icons.skip_next_rounded,
-                      color: Pallete.whiteColor,
-                      size: 26,
-                    ),
-                    onPressed: () {
-                      _player.playNext();
-                    },
-                  ),
-              ],
+                minHeight: 2.5,
+              ),
             ),
-          ),
-
-          // Mini Seek / Progress bar
-          ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(bottom: Radius.circular(10)),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Pallete.inactiveSeekColor,
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Pallete.gradient2),
-              minHeight: 2.5,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

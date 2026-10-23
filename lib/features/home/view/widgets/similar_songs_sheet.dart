@@ -8,10 +8,7 @@ import '../../../search/model/song_model.dart';
 class SimilarSongsSheet extends StatefulWidget {
   final SongModel currentSong;
 
-  const SimilarSongsSheet({
-    super.key,
-    required this.currentSong,
-  });
+  const SimilarSongsSheet({super.key, required this.currentSong});
 
   static void show(BuildContext context, SongModel song) {
     showModalBottomSheet(
@@ -79,7 +76,10 @@ class _SimilarSongsSheetState extends State<SimilarSongsSheet> {
       playableSongs.add(targetSong);
     }
 
-    _player.playQueue(playableSongs, initialIndex: index.clamp(0, playableSongs.length - 1));
+    _player.playQueue(
+      playableSongs,
+      initialIndex: index.clamp(0, playableSongs.length - 1),
+    );
     Navigator.pop(context);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -159,7 +159,10 @@ class _SimilarSongsSheetState extends State<SimilarSongsSheet> {
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded, color: Pallete.subtitleText),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: Pallete.subtitleText,
+                  ),
                 ),
               ],
             ),
@@ -168,9 +171,7 @@ class _SimilarSongsSheetState extends State<SimilarSongsSheet> {
           const Divider(color: Pallete.borderColor, height: 1),
 
           // Content
-          Expanded(
-            child: _buildContent(),
-          ),
+          Expanded(child: _buildContent()),
         ],
       ),
     );
@@ -198,13 +199,19 @@ class _SimilarSongsSheetState extends State<SimilarSongsSheet> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline_rounded, color: Pallete.errorColor, size: 40),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Pallete.errorColor,
+              size: 40,
+            ),
             const SizedBox(height: 12),
             Text(_error!, style: const TextStyle(color: Pallete.subtitleText)),
             const SizedBox(height: 16),
             ElevatedButton.icon(
               onPressed: _fetchSimilarSongs,
-              style: ElevatedButton.styleFrom(backgroundColor: Pallete.gradient1),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Pallete.gradient1,
+              ),
               icon: const Icon(Icons.refresh_rounded, color: Colors.white),
               label: const Text('Retry', style: TextStyle(color: Colors.white)),
             ),
@@ -239,7 +246,10 @@ class _SimilarSongsSheetState extends State<SimilarSongsSheet> {
             side: BorderSide(color: Pallete.borderColor.withAlpha(80)),
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: song.image.isNotEmpty
@@ -248,7 +258,8 @@ class _SimilarSongsSheetState extends State<SimilarSongsSheet> {
                       width: 48,
                       height: 48,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _fallbackCover(),
+                      errorBuilder: (context, error, stackTrace) =>
+                          _fallbackCover(),
                     )
                   : _fallbackCover(),
             ),
@@ -270,17 +281,26 @@ class _SimilarSongsSheetState extends State<SimilarSongsSheet> {
                   song.displayArtist,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Pallete.subtitleText, fontSize: 12),
+                  style: const TextStyle(
+                    color: Pallete.subtitleText,
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Pallete.gradient1.withAlpha(40),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Pallete.gradient1.withAlpha(120), width: 0.8),
+                        border: Border.all(
+                          color: Pallete.gradient1.withAlpha(120),
+                          width: 0.8,
+                        ),
                       ),
                       child: Text(
                         '$matchPercent% Match',
@@ -295,7 +315,10 @@ class _SimilarSongsSheetState extends State<SimilarSongsSheet> {
                       const SizedBox(width: 6),
                       Text(
                         song.matchingGenres.first,
-                        style: const TextStyle(color: Pallete.subtitleText, fontSize: 10),
+                        style: const TextStyle(
+                          color: Pallete.subtitleText,
+                          fontSize: 10,
+                        ),
                       ),
                     ],
                   ],

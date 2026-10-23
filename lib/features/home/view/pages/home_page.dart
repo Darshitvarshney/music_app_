@@ -12,6 +12,7 @@ import '../../../auth/view/pages/login_page.dart';
 import '../../../favorites/view/pages/liked_songs_page.dart';
 import '../../../search/model/song_model.dart';
 import '../../../search/view/pages/search_page.dart';
+import 'offline_songs_page.dart';
 import '../widgets/add_friend_bar.dart';
 import '../widgets/friend_card.dart';
 import '../widgets/mini_player.dart';
@@ -27,7 +28,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   UserModel? _currentUser;
   int _currentNavIndex = 0;
 
@@ -128,7 +130,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           if (sec.songs.length > 5 && isRefresh) {
             final rotated = List<RecommendedSongModel>.from(sec.songs);
             final offset = (_refreshSeed * 4) % rotated.length;
-            final sublist = [...rotated.sublist(offset), ...rotated.sublist(0, offset)];
+            final sublist = [
+              ...rotated.sublist(offset),
+              ...rotated.sublist(0, offset),
+            ];
             return HomepageSectionModel(
               id: sec.id,
               title: sec.title,
@@ -211,7 +216,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Log Out',
-          style: TextStyle(color: Pallete.whiteColor, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Pallete.whiteColor,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: const Text(
           'Are you sure you want to log out of your account?',
@@ -220,12 +228,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel', style: TextStyle(color: Pallete.greyColor)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Pallete.greyColor),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Pallete.errorColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Log Out', style: TextStyle(color: Colors.white)),
@@ -275,7 +288,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             SizedBox(width: 8),
             Text(
               'Create Jam Room',
-              style: TextStyle(color: Pallete.whiteColor, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Pallete.whiteColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -313,20 +329,30 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(color: Pallete.subtitleText)),
+            child: const Text(
+              'Close',
+              style: TextStyle(color: Pallete.subtitleText),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Pallete.gradient1,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Room code $roomCode copied to clipboard!')),
+                SnackBar(
+                  content: Text('Room code $roomCode copied to clipboard!'),
+                ),
               );
             },
-            child: const Text('Copy Code', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Copy Code',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -346,7 +372,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             SizedBox(width: 8),
             Text(
               'Join Room',
-              style: TextStyle(color: Pallete.whiteColor, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Pallete.whiteColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -362,13 +391,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             TextField(
               controller: codeController,
               textCapitalization: TextCapitalization.characters,
-              style: const TextStyle(color: Pallete.whiteColor, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: Pallete.whiteColor,
+                fontWeight: FontWeight.bold,
+              ),
               decoration: InputDecoration(
                 hintText: 'e.g. JAM-8921',
                 hintStyle: const TextStyle(color: Pallete.subtitleText),
                 filled: true,
                 fillColor: Pallete.backgroundColor,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ],
@@ -376,19 +410,26 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Pallete.subtitleText)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Pallete.subtitleText),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: Pallete.gradient2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onPressed: () {
               final code = codeController.text.trim();
               Navigator.pop(ctx);
               if (code.isNotEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Joined Room $code! Syncing audio stream...')),
+                  SnackBar(
+                    content: Text('Joined Room $code! Syncing audio stream...'),
+                  ),
                 );
               }
             },
@@ -451,9 +492,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         child: SafeArea(
           child: Column(
             children: [
-              Expanded(
-                child: _buildCurrentTab(displayName, greeting),
-              ),
+              Expanded(child: _buildCurrentTab(displayName, greeting)),
 
               // Persistent Mini Player across all tabs
               const MiniPlayer(),
@@ -472,13 +511,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         backgroundColor: Pallete.backgroundColor,
         selectedItemColor: Pallete.whiteColor,
         unselectedItemColor: Pallete.inactiveBottomBarItemColor,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
         unselectedLabelStyle: const TextStyle(fontSize: 12),
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_filled),
-            label: 'Home',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.search_rounded),
             label: 'Search',
@@ -541,7 +580,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       radius: 24,
                       backgroundColor: Pallete.gradient1,
                       child: Text(
-                        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'D',
+                        displayName.isNotEmpty
+                            ? displayName[0].toUpperCase()
+                            : 'D',
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -636,8 +677,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   icon: Icons.cloud_download_rounded,
                   gradientColors: const [Color(0xFF11998E), Color(0xFF38EF7D)],
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Offline Play Mode active')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OfflineSongsPage(),
+                      ),
                     );
                   },
                 ),
@@ -714,9 +758,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: AddFriendBar(
-              onAdd: _handleAddFriend,
-            ),
+            child: AddFriendBar(onAdd: _handleAddFriend),
           ),
 
           const SizedBox(height: 24),
@@ -827,7 +869,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         clipBehavior: Clip.antiAlias,
         child: ListTile(
           onTap: onTap,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 4,
+          ),
           leading: Container(
             width: 48,
             height: 48,
@@ -853,7 +898,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             subtitle,
             style: const TextStyle(fontSize: 12, color: Pallete.subtitleText),
           ),
-          trailing: const Icon(Icons.chevron_right_rounded, color: Pallete.subtitleText),
+          trailing: const Icon(
+            Icons.chevron_right_rounded,
+            color: Pallete.subtitleText,
+          ),
         ),
       ),
     );
@@ -890,10 +938,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           const SizedBox(height: 4),
           Text(
             _currentUser?.email ?? 'dinto@musicapp.com',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Pallete.subtitleText,
-            ),
+            style: const TextStyle(fontSize: 14, color: Pallete.subtitleText),
           ),
           const SizedBox(height: 24),
           Container(
@@ -905,7 +950,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ),
             child: const Row(
               children: [
-                Icon(Icons.workspace_premium_rounded, color: Pallete.gradient2, size: 26),
+                Icon(
+                  Icons.workspace_premium_rounded,
+                  color: Pallete.gradient2,
+                  size: 26,
+                ),
                 SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -921,7 +970,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       ),
                       Text(
                         'Ad-free high-fidelity streaming active',
-                        style: TextStyle(color: Pallete.subtitleText, fontSize: 12),
+                        style: TextStyle(
+                          color: Pallete.subtitleText,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -940,12 +992,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             style: ElevatedButton.styleFrom(
               backgroundColor: Pallete.errorColor.withAlpha(220),
               minimumSize: const Size(double.infinity, 50),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             icon: const Icon(Icons.logout_rounded, color: Colors.white),
             label: const Text(
               'Log Out',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -992,8 +1050,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         (s) {
           final idLower = s.id.toLowerCase();
           final titleLower = s.title.toLowerCase();
-          final isTrending = idLower.contains('trending') || titleLower.contains('trending');
-          final isChill = idLower.contains('chill') || titleLower.contains('chill');
+          final isTrending =
+              idLower.contains('trending') || titleLower.contains('trending');
+          final isChill =
+              idLower.contains('chill') || titleLower.contains('chill');
           return !isTrending && !isChill && s.songs.isNotEmpty;
         },
         orElse: () => _homepageSections.firstWhere(
@@ -1089,11 +1149,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   turns: _refreshSpinController,
                   child: Icon(
                     Icons.refresh_rounded,
-                    color: _isLoadingRecommendations ? Pallete.gradient2 : Pallete.subtitleText,
+                    color: _isLoadingRecommendations
+                        ? Pallete.gradient2
+                        : Pallete.subtitleText,
                     size: 20,
                   ),
                 ),
-                onPressed: _isLoadingRecommendations ? null : () => _fetchRecommendations(isRefresh: true),
+                onPressed: _isLoadingRecommendations
+                    ? null
+                    : () => _fetchRecommendations(isRefresh: true),
               ),
             ],
           ),
@@ -1129,7 +1193,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final matchScore = (song.recommendationScore * 100).round();
     final badgeLabel = song.matchingMoods.isNotEmpty
         ? song.matchingMoods.first
-        : (song.matchingGenres.isNotEmpty ? song.matchingGenres.first : '$matchScore% Match');
+        : (song.matchingGenres.isNotEmpty
+              ? song.matchingGenres.first
+              : '$matchScore% Match');
 
     return Container(
       width: 140,
@@ -1154,7 +1220,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         ? Image.network(
                             song.image,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => _fallbackCover(140),
+                            errorBuilder: (context, error, stackTrace) =>
+                                _fallbackCover(140),
                           )
                         : _fallbackCover(140),
                   ),
@@ -1164,16 +1231,26 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   top: 8,
                   left: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withAlpha(190),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Pallete.gradient2.withAlpha(160), width: 0.8),
+                      border: Border.all(
+                        color: Pallete.gradient2.withAlpha(160),
+                        width: 0.8,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.bolt_rounded, color: Pallete.gradient2, size: 12),
+                        const Icon(
+                          Icons.bolt_rounded,
+                          color: Pallete.gradient2,
+                          size: 12,
+                        ),
                         const SizedBox(width: 2),
                         Text(
                           badgeLabel,
@@ -1231,10 +1308,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               song.displayArtist,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Pallete.subtitleText,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: Pallete.subtitleText, fontSize: 11),
             ),
           ],
         ),
@@ -1250,7 +1324,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         color: Pallete.cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Icon(Icons.music_note_rounded, color: Pallete.gradient1, size: 36),
+      child: const Icon(
+        Icons.music_note_rounded,
+        color: Pallete.gradient1,
+        size: 36,
+      ),
     );
   }
 
@@ -1271,7 +1349,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final playIdx = playableSongs.indexWhere((s) => s.id == song.id);
     MusicPlayerService().playQueue(
       playableSongs,
-      initialIndex: playIdx != -1 ? playIdx : index.clamp(0, playableSongs.length - 1),
+      initialIndex: playIdx != -1
+          ? playIdx
+          : index.clamp(0, playableSongs.length - 1),
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1327,7 +1407,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             children: [
               const Row(
                 children: [
-                  Icon(Icons.graphic_eq_rounded, color: Pallete.gradient2, size: 22),
+                  Icon(
+                    Icons.graphic_eq_rounded,
+                    color: Pallete.gradient2,
+                    size: 22,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Your Music DNA',
@@ -1347,9 +1431,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Pallete.gradient2),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Pallete.gradient2,
+                        ),
                       )
-                    : const Icon(Icons.refresh_rounded, color: Pallete.subtitleText, size: 18),
+                    : const Icon(
+                        Icons.refresh_rounded,
+                        color: Pallete.subtitleText,
+                        size: 18,
+                      ),
                 onPressed: _isLoadingTasteProfile ? null : _fetchTasteProfile,
               ),
             ],
@@ -1380,11 +1471,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               runSpacing: 6,
               children: tasteGenres.take(4).map((label) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Pallete.gradient1.withAlpha(35),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Pallete.gradient1.withAlpha(120), width: 0.8),
+                    border: Border.all(
+                      color: Pallete.gradient1.withAlpha(120),
+                      width: 0.8,
+                    ),
                   ),
                   child: Text(
                     label,
@@ -1417,11 +1514,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               runSpacing: 6,
               children: tasteMoods.take(4).map((mood) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Pallete.gradient2.withAlpha(35),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Pallete.gradient2.withAlpha(120), width: 0.8),
+                    border: Border.all(
+                      color: Pallete.gradient2.withAlpha(120),
+                      width: 0.8,
+                    ),
                   ),
                   child: Text(
                     mood,
@@ -1454,7 +1557,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               runSpacing: 6,
               children: topArtists.take(3).map((entry) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Pallete.backgroundColor,
                     borderRadius: BorderRadius.circular(12),

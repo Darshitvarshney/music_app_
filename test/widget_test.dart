@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:client/features/auth/model/user_model.dart';
 import 'package:client/features/auth/view/pages/signup_page.dart';
 import 'package:client/features/home/view/pages/home_page.dart';
+import 'package:client/features/home/view/widgets/full_screen_player.dart';
+import 'package:client/features/search/model/song_model.dart';
 
 void main() {
   testWidgets('Signup page smoke test', (WidgetTester tester) async {
@@ -43,5 +45,36 @@ void main() {
     expect(find.text('Add Friend :'), findsOneWidget);
     expect(find.text('Friends :-'), findsOneWidget);
     expect(find.text('Midnight City Beats'), findsOneWidget);
+  });
+
+  testWidgets('FullScreenPlayer smoke test with controls and draggable timeline', (WidgetTester tester) async {
+    const testSong = SongModel(
+      id: 'test_1',
+      song: 'Channa Ve',
+      album: 'Bhoot',
+      primaryArtists: 'Akhil Sachdeva',
+      singers: 'Akhil Sachdeva',
+      duration: 211,
+      image: '',
+      mediaUrl: '',
+      mediaPreviewUrl: '',
+      year: '2023',
+      language: 'hindi',
+      hasLyrics: false,
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: FullScreenPlayer(initialSong: testSong),
+      ),
+    );
+
+    expect(find.text('Channa Ve'), findsOneWidget);
+    expect(find.text('Akhil Sachdeva'), findsOneWidget);
+    expect(find.byType(Slider), findsOneWidget);
+    expect(find.byIcon(Icons.auto_awesome_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.skip_previous_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.skip_next_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
   });
 }
