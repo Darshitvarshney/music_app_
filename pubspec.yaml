@@ -38,6 +38,8 @@ dependencies:
   flutter_secure_storage: ^11.2.0
   just_audio: ^0.10.6
   path_provider: ^2.1.6
+  just_audio_background: ^0.0.1-beta.17
+  audio_service: ^0.18.19
   # fpdart: ^2.0.0-dev.3
 
 dev_dependencies:

@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../features/auth/repositories/auth_local_repository.dart';
 import '../../features/search/model/song_model.dart';
 import '../../features/search/repositories/search_repository.dart';
+import 'audio_handler.dart';
 import 'download_service.dart';
 import 'recommendation_service.dart';
 
@@ -15,6 +17,9 @@ class MusicPlayerService extends ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
   final SearchRepository _searchRepository = SearchRepository();
   final RecommendationService _recommendationService = RecommendationService();
+
+  MusicAudioHandler? _audioHandler;
+  MusicAudioHandler? get audioHandler => _audioHandler;
 
   SongModel? _currentSong;
   List<SongModel> _queue = [];
@@ -31,6 +36,28 @@ class MusicPlayerService extends ChangeNotifier {
   bool _isLoadingAutoplay = false;
   SongModel? _activeTelemetrySong;
   bool _completedRecorded = false;
+
+  Future<void> initAudioService() async {
+    if (_audioHandler != null) return;
+    try {
+      _audioHandler = await AudioService.init(
+        builder: () => MusicAudioHandler(
+          player: _player,
+          onPlayNext: playNext,
+          onPlayPrevious: playPrevious,
+        ),
+        config: const AudioServiceConfig(
+          androidNotificationChannelId: 'com.example.client.channel.audio',
+          androidNotificationChannelName: 'Music Playback',
+          androidNotificationOngoing: true,
+          androidStopForegroundOnPause: true,
+          androidNotificationIcon: 'drawable/ic_music_notification',
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error initializing AudioService: $e');
+    }
+  }
 
   // Audio engine state tracking
   String? _loadedSongId;
@@ -304,6 +331,7 @@ class MusicPlayerService extends ChangeNotifier {
 
       if (setUrlSuccess) {
         _loadedSongId = activeSong.id;
+        _audioHandler?.setCurrentSong(activeSong);
         AuthLocalRepository().saveLastPlayedSong(activeSong);
 
         try {
