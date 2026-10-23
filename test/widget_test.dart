@@ -38,8 +38,10 @@ void main() {
 
     // Verify greeting and user display
     expect(find.text('Alex'), findsOneWidget);
-    expect(find.text('Made For You'), findsWidgets);
-    expect(find.text('Liked Songs'), findsOneWidget);
+    expect(find.text('Liked Song'), findsOneWidget);
+    expect(find.text('Listen with Friends'), findsOneWidget);
+    expect(find.text('Add Friend :'), findsOneWidget);
+    expect(find.text('Friends :-'), findsOneWidget);
     expect(find.text('Midnight City Beats'), findsOneWidget);
   });
 }

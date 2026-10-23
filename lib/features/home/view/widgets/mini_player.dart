@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../core/services/favorites_service.dart';
+import '../../../../core/services/music_player_service.dart';
 import '../../../../core/theme/app_pallete.dart';
+import 'similar_songs_sheet.dart';
 
 class MiniPlayer extends StatefulWidget {
   final String songTitle;
@@ -18,12 +21,43 @@ class MiniPlayer extends StatefulWidget {
 }
 
 class _MiniPlayerState extends State<MiniPlayer> {
-  bool _isPlaying = true;
-  bool _isLiked = false;
-  final double _progress = 0.35;
+  final MusicPlayerService _player = MusicPlayerService();
+  final FavoritesService _favoritesService = FavoritesService();
+
+  @override
+  void initState() {
+    super.initState();
+    _player.addListener(_onPlayerUpdate);
+    _favoritesService.addListener(_onPlayerUpdate);
+  }
+
+  @override
+  void dispose() {
+    _player.removeListener(_onPlayerUpdate);
+    _favoritesService.removeListener(_onPlayerUpdate);
+    super.dispose();
+  }
+
+  void _onPlayerUpdate() {
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {});
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final currentSong = _player.currentSong;
+    final title = currentSong?.song ?? widget.songTitle;
+    final artist = currentSong?.displayArtist ?? widget.artist;
+    final isPlaying = _player.isPlaying;
+    final isBuffering = _player.isBuffering;
+    final progress = _player.progressRatio;
+    final imageUrl = currentSong?.image ?? '';
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -60,11 +94,22 @@ class _MiniPlayerState extends State<MiniPlayer> {
                       end: Alignment.bottomRight,
                     ),
                   ),
-                  child: const Icon(
-                    Icons.music_note_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => const Icon(
+                            Icons.music_note_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.music_note_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                 ),
                 const SizedBox(width: 12),
 
@@ -75,7 +120,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        widget.songTitle,
+                        title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -86,7 +131,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        widget.artist,
+                        artist,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -100,44 +145,92 @@ class _MiniPlayerState extends State<MiniPlayer> {
 
                 // Like Button
                 IconButton(
+                  tooltip: currentSong != null && _favoritesService.isLiked(currentSong.id)
+                      ? 'Unlike'
+                      : 'Like',
                   onPressed: () {
-                    setState(() {
-                      _isLiked = !_isLiked;
-                    });
+                    if (currentSong != null) {
+                      _favoritesService.toggleLike(currentSong);
+                    }
                   },
                   icon: Icon(
-                    _isLiked ? Icons.favorite : Icons.favorite_border_rounded,
-                    color: _isLiked ? Pallete.gradient2 : Pallete.whiteColor,
+                    currentSong != null && _favoritesService.isLiked(currentSong.id)
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: currentSong != null && _favoritesService.isLiked(currentSong.id)
+                        ? Pallete.gradient2
+                        : Pallete.whiteColor,
                     size: 22,
                   ),
                 ),
 
-                // Play / Pause Button
+                // Play / Pause / Buffering Button
                 IconButton(
                   onPressed: () {
-                    setState(() {
-                      _isPlaying = !_isPlaying;
-                    });
+                    if (currentSong != null) {
+                      _player.togglePlayPause();
+                    }
                   },
-                  icon: Icon(
-                    _isPlaying
-                        ? Icons.pause_circle_filled_rounded
-                        : Icons.play_circle_fill_rounded,
-                    color: Pallete.whiteColor,
-                    size: 32,
-                  ),
+                  icon: isBuffering
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            color: Pallete.gradient2,
+                          ),
+                        )
+                      : Icon(
+                          isPlaying
+                              ? Icons.pause_circle_filled_rounded
+                              : Icons.play_circle_fill_rounded,
+                          color: Pallete.whiteColor,
+                          size: 32,
+                        ),
                 ),
+
+                // Song Radio / Similar songs discovery button
+                if (currentSong != null)
+                  IconButton(
+                    tooltip: 'Song Radio & Similar Tracks',
+                    icon: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Pallete.gradient2,
+                      size: 20,
+                    ),
+                    onPressed: () {
+                      SimilarSongsSheet.show(context, currentSong);
+                    },
+                  ),
+
+                // Next Button (when queue has songs or autoplay is active)
+                if (_player.hasNext || _player.autoplayEnabled)
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: 'Next',
+                    icon: const Icon(
+                      Icons.skip_next_rounded,
+                      color: Pallete.whiteColor,
+                      size: 26,
+                    ),
+                    onPressed: () {
+                      _player.playNext();
+                    },
+                  ),
               ],
             ),
           ),
 
           // Mini Seek / Progress bar
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(10)),
+            borderRadius:
+                const BorderRadius.vertical(bottom: Radius.circular(10)),
             child: LinearProgressIndicator(
-              value: _progress,
+              value: progress,
               backgroundColor: Pallete.inactiveSeekColor,
-              valueColor: const AlwaysStoppedAnimation<Color>(Pallete.gradient2),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Pallete.gradient2),
               minHeight: 2.5,
             ),
           ),
