@@ -1,12 +1,12 @@
 # 🎵 BeatStream (Music App)
 
-A modern, high-performance music streaming and discovery application built with **Flutter** and **Dart**. Featuring a sleek dark-themed UI, personalized song recommendations, social listening with friends, and high-fidelity audio playback.
+A modern, responsive music streaming application built with **Flutter** and **Dart**. Designed with a sleek dark aesthetic, seamless audio playback controls, personalized recommendation feeds, and social listening features.
 
 ---
 
-### 📲 Download APK
+### 📲 Download Latest APK
 
-Get the latest release directly on your Android device:
+Install and test the release build on your Android device:
 
 [![Download APK](https://img.shields.io/badge/Download-Android%20APK-4CAF50?style=for-the-badge&logo=android&logoColor=white)](https://drive.google.com/file/d/14PVmM_b2DHtECphe0M0p7HBtEqiRevvX/view?usp=sharing)
 
@@ -14,23 +14,47 @@ Get the latest release directly on your Android device:
 
 ---
 
-## ✨ Features
+## ⚡ Current Working Features
 
-- **🎧 Seamless Audio Player**:
-  - Persistent mini player and immersive full-screen audio player.
-  - Smooth progress scrubbing, play, pause, skip, shuffle, and repeat controls powered by `just_audio`.
-- **✨ Smart Recommendations & Feed**:
-  - Dynamic home screen with curated feeds and personal taste profile insights.
-- **🔍 Fast Search & Discovery**:
-  - Instantly search through songs, artists, and albums.
-- **❤️ Favorites & Liked Songs**:
-  - Save and organize favorite tracks with instant offline-synced access.
-- **👥 Social & Listening Rooms**:
-  - View real-time friend activity, see what friends are streaming, and join shared listening sessions.
-- **🔐 Secure Authentication**:
-  - User sign-up and login with token persistence using `flutter_secure_storage`.
-- **🎨 Premium Dark UI**:
-  - Custom dark theme with vibrant gradients, fluid micro-animations, and responsive layouts.
+### 🎧 Audio Playback & Player
+- **Core Player Engine**: High-fidelity online audio playback powered by `just_audio`.
+- **Persistent Mini-Player**: Bottom-docked mini player with play/pause and track details while navigating other pages.
+- **Full Player Screen**: Immersive player interface with track scrubber/slider, current/total duration timestamps, play, pause, next, and previous track controls.
+
+### 🔐 Authentication & Session Management
+- **User Registration & Login**: Email and password authentication.
+- **Secure Token Storage**: Encrypted token persistence using `flutter_secure_storage`.
+- **Auth Gate**: Auto-login on app launch when a valid session token exists.
+
+### 🏠 Dynamic Home & Discovery
+- **Personalized Feed**: Curated home sections with intelligent song recommendations.
+- **Taste Profile**: Visual taste profile indicators reflecting listening preferences.
+- **Pull-to-Refresh**: Refresh recommendations with smooth spin animations.
+
+### 🔍 Search & Exploration
+- **Real-Time Track Search**: Search music by song title or artist.
+- **Instant Results**: Fast browsing with tap-to-play functionality.
+
+### ❤️ Favorites & Library
+- **Liked Songs**: Save favorite songs with a single heart tap.
+- **Dedicated Favorites Page**: View and play your entire collection of liked tracks.
+
+### 👥 Social & Activity UI
+- **Friend Activity Feed**: Visual indicators displaying what friends are currently listening to and their online status.
+- **Quick Action Bar**: Fast shortcuts for listening rooms and social features.
+
+---
+
+## 🔮 Upcoming Features (Roadmap)
+
+- [ ] **📥 Offline Song Downloads**: Download tracks locally to enjoy uninterrupted music without internet connectivity.
+- [ ] **📜 Synchronized Real-Time Lyrics**: Karaoke-style live scrolling lyrics synchronized with track playback.
+- [ ] **🎚️ Built-in Audio Equalizer**: Customizable presets (Bass Boost, Pop, Rock, Classical) and frequency band controls.
+- [ ] **👥 Real-Time Collaborative Listening**: Live synchronized group listening rooms using WebSockets.
+- [ ] **📁 Custom Playlists & Folders**: Create, rename, reorder, and share custom user-generated playlists.
+- [ ] **⏰ Sleep Timer**: Auto-pause audio playback after a set duration.
+- [ ] **🎨 Dynamic Theming**: Real-time theme palette adapting to the current track's album artwork colors.
+- [ ] **🔔 Lock Screen & Notification Controls**: Background notification controls with media art and seeking actions.
 
 ---
 
@@ -40,8 +64,8 @@ Get the latest release directly on your Android device:
 - **Language**: [Dart](https://dart.dev/)
 - **Audio Engine**: [`just_audio`](https://pub.dev/packages/just_audio)
 - **Networking**: [`http`](https://pub.dev/packages/http)
-- **Security / Storage**: [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage)
-- **Icons**: `cupertino_icons` & Material Icons
+- **Secure Storage**: [`flutter_secure_storage`](https://pub.dev/packages/flutter_secure_storage)
+- **Icons**: `cupertino_icons` & Material Design Icons
 
 ---
 
@@ -49,10 +73,9 @@ Get the latest release directly on your Android device:
 
 ### Prerequisites
 
-Ensure you have the following installed:
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (v3.12.0 or higher)
 - [Dart SDK](https://dart.dev/get-dart)
-- Android Studio / VS Code with Flutter & Dart extensions
+- Android Studio or VS Code with Flutter extension
 - Android device or emulator (Android 7.0+ recommended)
 
 ### Local Development Setup
@@ -68,46 +91,47 @@ Ensure you have the following installed:
    flutter pub get
    ```
 
-3. **Run the app:**
+3. **Run in development mode:**
    ```bash
    flutter run
    ```
 
-4. **Build APK for Release:**
+4. **Build a release APK:**
    ```bash
    flutter build apk --release
    ```
-   The release APK will be generated at `build/app/outputs/flutter-apk/app-release.apk`.
+   The generated APK will be located at:
+   `build/app/outputs/flutter-apk/app-release.apk`
 
 ---
 
-## 📦 Installing the APK on Android
+## 📦 How to Install APK on Android
 
-1. Download the `.apk` file using the [Google Drive Link](https://drive.google.com/file/d/14PVmM_b2DHtECphe0M0p7HBtEqiRevvX/view?usp=sharing).
-2. Open the downloaded file on your Android device.
-3. If prompted, enable **"Install Unknown Apps"** from your browser/file manager settings.
-4. Tap **Install** and launch the app!
+1. Download the file from the [Google Drive Download Link](https://drive.google.com/file/d/14PVmM_b2DHtECphe0M0p7HBtEqiRevvX/view?usp=sharing).
+2. Open the downloaded `.apk` file from your device notifications or Downloads folder.
+3. If prompted by Android, grant **"Allow from this source"** in your browser/file manager settings.
+4. Tap **Install** and open the app.
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Architecture
 
 ```text
 lib/
 ├── core/
-│   ├── models/            # Shared data models (recommendations, etc.)
-│   ├── services/          # Audio player, favorites, recommendation services
-│   └── theme/             # Color palette, dark theme definitions
+│   ├── models/            # Shared data contracts (recommendations, etc.)
+│   ├── services/          # Audio playback, favorites, recommendation logic
+│   └── theme/             # Color palette, dark theme styles
 ├── features/
-│   ├── auth/              # Sign in, Sign up, Token handling & AuthGate
-│   ├── favorites/         # Liked songs & playlist screens
-│   ├── home/              # Main dashboard, mini player, social cards
-│   └── search/            # Search bar & search results
-└── main.dart              # Application entry point & theme initialization
+│   ├── auth/              # Sign in, Sign up, Session tokens & AuthGate
+│   ├── favorites/         # Liked songs & favorites UI
+│   ├── home/              # Main dashboard, mini-player, social widgets
+│   └── search/            # Search bar & song query results
+└── main.dart              # App initialization & root widget
 ```
 
 ---
 
 ## 📄 License
 
-This project is open-source and available under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
