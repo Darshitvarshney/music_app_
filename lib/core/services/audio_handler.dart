@@ -106,20 +106,25 @@ class MusicAudioHandler extends BaseAudioHandler with SeekHandler {
         break;
     }
 
+    final isIdle = audioProcessingState == AudioProcessingState.idle;
+
     playbackState.add(
       PlaybackState(
-        controls: [
-          MediaControl.skipToPrevious,
-          if (isPlaying) MediaControl.pause else MediaControl.play,
-          MediaControl.skipToNext,
-          favoriteControl,
-        ],
+        controls: isIdle
+            ? const []
+            : [
+                MediaControl.skipToPrevious,
+                if (isPlaying) MediaControl.pause else MediaControl.play,
+                MediaControl.skipToNext,
+                favoriteControl,
+              ],
         systemActions: const {
           MediaAction.seek,
           MediaAction.seekForward,
           MediaAction.seekBackward,
+          MediaAction.stop,
         },
-        androidCompactActionIndices: const [0, 1, 2],
+        androidCompactActionIndices: isIdle ? const [] : const [0, 1, 2],
         processingState: audioProcessingState,
         playing: isPlaying,
         updatePosition: player.position,
@@ -146,6 +151,41 @@ class MusicAudioHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> skipToPrevious() async {
     onPlayPrevious();
+  }
+
+  @override
+  Future<void> stop() async {
+    await player.stop();
+    playbackState.add(
+      PlaybackState(
+        controls: const [],
+        systemActions: const {
+          MediaAction.seek,
+          MediaAction.seekForward,
+          MediaAction.seekBackward,
+          MediaAction.stop,
+        },
+        androidCompactActionIndices: const [],
+        processingState: AudioProcessingState.idle,
+        playing: false,
+        updatePosition: Duration.zero,
+        bufferedPosition: Duration.zero,
+        speed: 1.0,
+      ),
+    );
+    await super.stop();
+  }
+
+  @override
+  Future<void> onTaskRemoved() async {
+    await stop();
+    await super.onTaskRemoved();
+  }
+
+  @override
+  Future<void> onNotificationDeleted() async {
+    await stop();
+    await super.onNotificationDeleted();
   }
 
   @override

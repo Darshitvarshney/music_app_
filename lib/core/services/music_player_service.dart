@@ -49,7 +49,7 @@ class MusicPlayerService extends ChangeNotifier {
         config: const AudioServiceConfig(
           androidNotificationChannelId: 'com.example.client.channel.audio',
           androidNotificationChannelName: 'Music Playback',
-          androidNotificationOngoing: true,
+          androidNotificationOngoing: false,
           androidStopForegroundOnPause: true,
           androidNotificationIcon: 'drawable/ic_music_notification',
         ),
@@ -487,11 +487,22 @@ class MusicPlayerService extends ChangeNotifier {
     await _player.seek(position);
   }
 
+  Future<void> stop() async {
+    _loadedSongId = null;
+    await _player.stop();
+    await _audioHandler?.stop();
+    _isPlaying = false;
+    _isBuffering = false;
+    _position = Duration.zero;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _playerStateSub?.cancel();
     _positionSub?.cancel();
     _durationSub?.cancel();
+    _audioHandler?.stop();
     _player.dispose();
     super.dispose();
   }
