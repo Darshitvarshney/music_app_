@@ -496,10 +496,10 @@ class _FullScreenPlayerState extends State<FullScreenPlayer> {
                                     size: 26,
                                   ),
                                   onPressed: () {
-                                    SimilarSongsSheet.show(
-                                      context,
-                                      currentSong,
-                                    );
+                                    // SimilarSongsSheet.show(
+                                    //   context,
+                                    //   currentSong,
+                                    // );
                                   },
                                 ),
                               ],

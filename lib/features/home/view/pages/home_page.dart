@@ -1060,7 +1060,7 @@ class _HomePageState extends State<HomePage>
           (s) => s.songs.isNotEmpty,
           orElse: () => const HomepageSectionModel(
             id: 'recommended_for_you',
-            title: 'Discover New',
+            title: 'Discover',
             subtitle: 'Personalized mix based on your taste',
             songs: [],
           ),
@@ -1075,10 +1075,8 @@ class _HomePageState extends State<HomePage>
     return _buildHomepageSection(
       HomepageSectionModel(
         id: primarySection.id,
-        title: 'Discover New',
-        subtitle: primarySection.subtitle.isNotEmpty
-            ? primarySection.subtitle
-            : 'Personalized mix based on your taste',
+        title: 'Discover',
+        subtitle:'Personalized mix based on your taste',
         seedSong: primarySection.seedSong,
         songs: primarySection.songs,
       ),
