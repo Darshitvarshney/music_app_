@@ -34,6 +34,7 @@ class MusicPlayerService extends ChangeNotifier {
   bool _autoplayEnabled = true;
   bool _isLoopEnabled = false;
   bool _isLoadingAutoplay = false;
+  Future<void>? _inFlightAutoplayFuture;
   SongModel? _activeTelemetrySong;
   bool _completedRecorded = false;
 
@@ -208,7 +209,35 @@ class MusicPlayerService extends ChangeNotifier {
     _queueIndex = (initialIndex >= 0 && initialIndex < _queue.length)
         ? initialIndex
         : 0;
-    await playSong(_queue[_queueIndex]);
+    await playSong(_queue[_queueIndex], queue: _queue);
+  }
+
+  /// Plays a single song and populates the upcoming autoplay queue dynamically
+  /// using the personalized recommendation backend (/api/recommend) instead of
+  /// static homepage recommendations.
+  Future<void> playSongWithAutoplay(SongModel song) async {
+    final bool isAlreadyLoadedInPlayer =
+        _loadedSongId == song.id &&
+        _player.audioSource != null &&
+        _player.processingState != ProcessingState.idle;
+
+    if (isAlreadyLoadedInPlayer) {
+      if (_isPlaying) {
+        await pause();
+      } else {
+        if (_player.processingState == ProcessingState.completed) {
+          await _player.seek(Duration.zero);
+        }
+        await _player.play();
+      }
+      return;
+    }
+
+    _queue = [song];
+    _queueIndex = 0;
+    await playSong(song, queue: [song]);
+    // Eagerly prefetch recommendations from /api/recommend for autoplay
+    await _fetchAutoplayQueue(andPlay: false);
   }
 
   Future<void> playSong(SongModel song, {List<SongModel>? queue}) async {
@@ -216,9 +245,15 @@ class MusicPlayerService extends ChangeNotifier {
       _queue = List<SongModel>.from(queue);
       final idx = _queue.indexWhere((s) => s.id == song.id);
       _queueIndex = idx != -1 ? idx : 0;
-    } else if (_queue.isEmpty) {
-      _queue = [song];
-      _queueIndex = 0;
+    } else {
+      final isAlreadyAtQueueIndex = _queueIndex >= 0 &&
+          _queueIndex < _queue.length &&
+          _queue[_queueIndex].id == song.id;
+
+      if (!isAlreadyAtQueueIndex) {
+        _queue = [song];
+        _queueIndex = 0;
+      }
     }
 
     // If the song is already loaded in the audio engine and playable, toggle play/pause
@@ -376,8 +411,22 @@ class MusicPlayerService extends ChangeNotifier {
   }
 
   Future<void> _fetchAutoplayQueue({bool andPlay = false}) async {
-    if (_isLoadingAutoplay || _currentSong == null) return;
+    if (_currentSong == null) return;
+
+    if (_isLoadingAutoplay) {
+      if (andPlay && _inFlightAutoplayFuture != null) {
+        await _inFlightAutoplayFuture;
+        if (hasNext) {
+          _queueIndex++;
+          await playSong(_queue[_queueIndex]);
+        }
+      }
+      return;
+    }
+
     _isLoadingAutoplay = true;
+    final completer = Completer<void>();
+    _inFlightAutoplayFuture = completer.future;
 
     try {
       final userId = await AuthLocalRepository().getEffectiveUserId();
@@ -392,7 +441,9 @@ class MusicPlayerService extends ChangeNotifier {
 
       final playable = recommendations
           .where(
-            (r) => r.playbackEligibility.isEligible && r.mediaUrl.isNotEmpty,
+            (r) =>
+                r.playbackEligibility.isEligible &&
+                (r.mediaUrl.isNotEmpty || r.song.isNotEmpty),
           )
           .map((r) => r.toSongModel())
           .where((s) => !_queue.any((q) => q.id == s.id))
@@ -410,6 +461,10 @@ class MusicPlayerService extends ChangeNotifier {
       debugPrint('Error fetching autoplay queue: $e');
     } finally {
       _isLoadingAutoplay = false;
+      if (!completer.isCompleted) {
+        completer.complete();
+      }
+      _inFlightAutoplayFuture = null;
     }
   }
 

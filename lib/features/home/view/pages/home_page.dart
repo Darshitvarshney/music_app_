@@ -1060,7 +1060,7 @@ class _HomePageState extends State<HomePage>
           (s) => s.songs.isNotEmpty,
           orElse: () => const HomepageSectionModel(
             id: 'recommended_for_you',
-            title: 'Recommended For You',
+            title: 'Discover New',
             subtitle: 'Personalized mix based on your taste',
             songs: [],
           ),
@@ -1075,7 +1075,7 @@ class _HomePageState extends State<HomePage>
     return _buildHomepageSection(
       HomepageSectionModel(
         id: primarySection.id,
-        title: 'Recommended For You',
+        title: 'Discover New',
         subtitle: primarySection.subtitle.isNotEmpty
             ? primarySection.subtitle
             : 'Personalized mix based on your taste',
@@ -1333,31 +1333,20 @@ class _HomePageState extends State<HomePage>
   }
 
   void _playRecommendedSong(
-    RecommendedSongModel song,
-    int index,
-    List<RecommendedSongModel> sectionSongs,
-  ) {
-    final playableSongs = sectionSongs
-        .where((s) => s.playbackEligibility.isEligible && s.mediaUrl.isNotEmpty)
-        .map((s) => s.toSongModel())
-        .toList();
-
-    if (playableSongs.isEmpty) {
-      playableSongs.add(song.toSongModel());
-    }
-
-    final playIdx = playableSongs.indexWhere((s) => s.id == song.id);
-    MusicPlayerService().playQueue(
-      playableSongs,
-      initialIndex: playIdx != -1
-          ? playIdx
-          : index.clamp(0, playableSongs.length - 1),
-    );
+    RecommendedSongModel song, [
+    int? index,
+    List<RecommendedSongModel>? sectionSongs,
+  ]) {
+    final songModel = song.toSongModel();
+    // Play selected song alone and populate autoplay queue dynamically
+    // from POST /api/recommend instead of homepage recommendation section.
+    MusicPlayerService().playSongWithAutoplay(songModel);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Playing "${song.song}" from Recommendations'),
+        content: Text('Playing "${song.song}" • Autoplay via /api/recommend'),
         backgroundColor: Pallete.cardColor,
+        duration: const Duration(milliseconds: 1500),
       ),
     );
   }
