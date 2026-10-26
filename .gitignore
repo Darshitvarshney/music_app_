@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Tests are kept local only (developer decision); do not commit them
+/test/

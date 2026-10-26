@@ -355,3 +355,76 @@ class HomepageResponseModel {
     );
   }
 }
+
+/// One ranked entry of the Music DNA (e.g. "Bollywood" at 42%)
+class MusicDnaItemModel {
+  final String name;
+  final int percent;
+
+  const MusicDnaItemModel({required this.name, required this.percent});
+
+  factory MusicDnaItemModel.fromMap(Map<String, dynamic> map) {
+    final rawPercent = map['percent'];
+    return MusicDnaItemModel(
+      name: map['name']?.toString() ?? '',
+      percent: rawPercent is num ? rawPercent.round() : 0,
+    );
+  }
+}
+
+/// "Your Music DNA" returned by GET /api/music-dna (generated once, cached for 1 day by the server)
+class MusicDnaModel {
+  final bool hasData;
+  final String summary;
+  final int totalEvents;
+  final int favoritesCount;
+  final List<MusicDnaItemModel> topGenres;
+  final List<MusicDnaItemModel> topSubgenres;
+  final List<MusicDnaItemModel> topMoods;
+  final List<MusicDnaItemModel> topArtists;
+  final List<MusicDnaItemModel> topLanguages;
+  final DateTime? generatedAt;
+  final DateTime? expiresAt;
+  final bool cached;
+
+  const MusicDnaModel({
+    required this.hasData,
+    required this.summary,
+    required this.totalEvents,
+    required this.favoritesCount,
+    required this.topGenres,
+    required this.topSubgenres,
+    required this.topMoods,
+    required this.topArtists,
+    required this.topLanguages,
+    this.generatedAt,
+    this.expiresAt,
+    this.cached = false,
+  });
+
+  factory MusicDnaModel.fromMap(Map<String, dynamic> map) {
+    List<MusicDnaItemModel> parseItems(dynamic raw) {
+      if (raw is! List) return <MusicDnaItemModel>[];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map((m) => MusicDnaItemModel.fromMap(m))
+          .where((item) => item.name.isNotEmpty)
+          .toList();
+    }
+
+    return MusicDnaModel(
+      hasData: map['hasData'] == true,
+      summary: map['summary']?.toString() ?? '',
+      totalEvents: map['totalEvents'] is num ? (map['totalEvents'] as num).toInt() : 0,
+      favoritesCount: map['favoritesCount'] is num ? (map['favoritesCount'] as num).toInt() : 0,
+      topGenres: parseItems(map['topGenres']),
+      topSubgenres: parseItems(map['topSubgenres']),
+      topMoods: parseItems(map['topMoods']),
+      topArtists: parseItems(map['topArtists']),
+      topLanguages: parseItems(map['topLanguages']),
+      generatedAt: DateTime.tryParse(map['generatedAt']?.toString() ?? ''),
+      expiresAt: DateTime.tryParse(map['expiresAt']?.toString() ?? ''),
+      cached: map['cached'] == true,
+    );
+  }
+}

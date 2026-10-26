@@ -58,6 +58,9 @@ class SignUpInRepository {
     if (field == 'password' && type.contains('missing')) {
       return 'Please enter your password.';
     }
+    if (field == 'invite_code' && type.contains('missing')) {
+      return 'Please enter the invite code.';
+    }
     if (field == 'name' && type.contains('missing')) {
       return 'Please enter your name.';
     }
@@ -71,12 +74,18 @@ class SignUpInRepository {
     required String name,
     required String email,
     required String password,
+    required String inviteCode,
   }) async {
     try {
       final response = await http.post(
         Uri.parse('https://music-app-backend-amber.vercel.app/user/signup'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'name': name, 'email': email, 'password': password}),
+        body: jsonEncode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'invite_code': inviteCode,
+        }),
       );
       return response;
     } catch (e) {

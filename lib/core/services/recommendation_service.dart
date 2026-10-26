@@ -211,6 +211,26 @@ class RecommendationService {
     }
   }
 
+  /// Fetches "Your Music DNA". The server computes it once and caches it for 1 day,
+  /// so calling this repeatedly is cheap and returns the same snapshot.
+  Future<MusicDnaModel?> getMusicDna(String userId) async {
+    final uri = Uri.parse('$baseUrl/api/music-dna?userId=${Uri.encodeComponent(userId)}');
+
+    try {
+      final response = await _client.get(uri, headers: _headers(userId)).timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map<String, dynamic> && decoded['dna'] is Map<String, dynamic>) {
+          return MusicDnaModel.fromMap(decoded['dna'] as Map<String, dynamic>);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Sends explicit like / dislike feedback
   Future<bool> sendFeedback({
     required String userId,

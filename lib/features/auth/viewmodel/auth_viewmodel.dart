@@ -41,6 +41,7 @@ class AuthViewModel extends ChangeNotifier {
     required String name,
     required String email,
     required String password,
+    required String inviteCode,
   }) async {
     _setLoading(true);
     try {
@@ -48,6 +49,7 @@ class AuthViewModel extends ChangeNotifier {
         name: name,
         email: email,
         password: password,
+        inviteCode: inviteCode,
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -103,10 +105,8 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  /// Validates cached session by checking the refresh token and acquiring a new access token.
-  /// - Returns [AuthCheckStatus.authenticated] if refreshed successfully.
-  /// - Returns [AuthCheckStatus.offline] if offline or network connection failed (user remains authenticated).
-  /// - Returns [AuthCheckStatus.unauthorized] if the backend explicitly rejected the token (HTTP 401/403).
+  /// Checks the cached session via the refresh token: authenticated, offline (network
+  /// failure, stays signed in) or unauthorized (backend rejected it with 401/403).
   Future<AuthCheckStatus> checkAuthAndRefreshToken() async {
     final refreshToken = await _localRepository.getRefreshToken();
     if (refreshToken == null || refreshToken.isEmpty) {

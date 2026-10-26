@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'app_pallete.dart';
 
 class AppTheme {
-  // static final ThemeData lightTheme = ThemeData(
-  //   colorScheme: ColorScheme.light(),
-  // );
+  // static final ThemeData lightTheme = ThemeData(colorScheme: ColorScheme.light());
   static OutlineInputBorder _border(Color borderColor) => OutlineInputBorder(
         borderSide: BorderSide(color: borderColor, width: 3),
         borderRadius: BorderRadius.circular(10),

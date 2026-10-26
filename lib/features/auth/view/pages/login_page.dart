@@ -51,10 +51,7 @@ class _SigninPageState extends State<SigninPage> {
 
                 const SizedBox(height: 30),
 
-                // CustomField(
-                //   hintText: 'Name',
-                //   controller: nameController,
-                // ),
+                // CustomField(hintText: 'Name', controller: nameController),
 
                 // const SizedBox(height: 16),
                 CustomField(

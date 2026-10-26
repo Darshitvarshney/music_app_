@@ -20,6 +20,7 @@ class _SignupPageState extends State<SignupPage> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final inviteCodeController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
@@ -28,6 +29,7 @@ class _SignupPageState extends State<SignupPage> {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
+    inviteCodeController.dispose();
     super.dispose();
   }
 
@@ -70,6 +72,14 @@ class _SignupPageState extends State<SignupPage> {
 
                 const SizedBox(height: 16),
 
+                CustomField(
+                  hintText: 'Invite code',
+                  controller: inviteCodeController,
+                  isCode: true,
+                ),
+
+                const SizedBox(height: 16),
+
                 SignupLoginButton(
                   buttonText: 'Sign Up',
                   isLoading: _isLoading,
@@ -83,6 +93,7 @@ class _SignupPageState extends State<SignupPage> {
                         name: nameController.text,
                         email: emailController.text,
                         password: passwordController.text,
+                        inviteCode: inviteCodeController.text.trim(),
                       );
 
                       if (!context.mounted) return;

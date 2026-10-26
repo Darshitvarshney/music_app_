@@ -4,8 +4,12 @@ import '../model/song_model.dart';
 
 class SearchRepository {
   final http.Client _client;
+  final String _baseUrl;
 
-  SearchRepository({http.Client? client}) : _client = client ?? http.Client();
+  SearchRepository({http.Client? client, String? baseUrl})
+      : _client = client ?? http.Client(),
+        _baseUrl = (baseUrl ?? 'https://music-app-backend-amber.vercel.app')
+            .replaceAll(RegExp(r'/+$'), '');
 
   Future<List<SongModel>> searchSongs(String query) async {
     final trimmed = query.trim();
@@ -14,7 +18,7 @@ class SearchRepository {
     }
 
     final uri = Uri.parse(
-      'https://song-api-nine.vercel.app/result/?query=${Uri.encodeComponent(trimmed)}&lyrics=true',
+      '$_baseUrl/result/?query=${Uri.encodeComponent(trimmed)}&lyrics=true',
     );
 
     try {
@@ -42,7 +46,7 @@ class SearchRepository {
     }
 
     final uri = Uri.parse(
-      'https://song-api-nine.vercel.app/song/?query=${Uri.encodeComponent(trimmed)}',
+      '$_baseUrl/song/?query=${Uri.encodeComponent(trimmed)}',
     );
 
     try {

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_pallete.dart';
 
 class AddFriendBar extends StatefulWidget {
-  final ValueChanged<String> onAdd;
+  /// Sends the request for the typed username. Return true on success (the field is then cleared),
+  /// false to keep the text so the user can fix a typo.
+  final Future<bool> Function(String username) onAdd;
 
   const AddFriendBar({
     super.key,
@@ -15,6 +17,7 @@ class AddFriendBar extends StatefulWidget {
 
 class _AddFriendBarState extends State<AddFriendBar> {
   final TextEditingController _controller = TextEditingController();
+  bool _isSending = false;
 
   @override
   void dispose() {
@@ -22,12 +25,26 @@ class _AddFriendBarState extends State<AddFriendBar> {
     super.dispose();
   }
 
-  void _submit() {
-    final text = _controller.text.trim();
-    if (text.isNotEmpty) {
-      widget.onAdd(text);
+  Future<void> _submit() async {
+    if (_isSending) return;
+    var text = _controller.text.trim();
+    if (text.startsWith('@')) {
+      text = text.substring(1).trim();
+    }
+    if (text.isEmpty) return;
+
+    FocusScope.of(context).unfocus();
+    setState(() => _isSending = true);
+    var success = false;
+    try {
+      success = await widget.onAdd(text);
+    } catch (_) {
+      success = false;
+    }
+    if (!mounted) return;
+    setState(() => _isSending = false);
+    if (success) {
       _controller.clear();
-      FocusScope.of(context).unfocus();
     }
   }
 
@@ -62,12 +79,15 @@ class _AddFriendBarState extends State<AddFriendBar> {
           Expanded(
             child: TextField(
               controller: _controller,
+              enabled: !_isSending,
+              autocorrect: false,
+              textInputAction: TextInputAction.send,
               style: const TextStyle(
                 color: Pallete.whiteColor,
                 fontSize: 14,
               ),
               decoration: const InputDecoration(
-                hintText: 'Enter username or friend ID...',
+                hintText: "Friend's username",
                 hintStyle: TextStyle(
                   color: Pallete.subtitleText,
                   fontSize: 13,
@@ -83,7 +103,7 @@ class _AddFriendBarState extends State<AddFriendBar> {
           Padding(
             padding: const EdgeInsets.only(right: 6.0),
             child: InkWell(
-              onTap: _submit,
+              onTap: _isSending ? null : _submit,
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -102,14 +122,23 @@ class _AddFriendBarState extends State<AddFriendBar> {
                     ),
                   ],
                 ),
-                child: const Text(
-                  'Add',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: _isSending
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Add',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
           ),

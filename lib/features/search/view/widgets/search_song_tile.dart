@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/theme/app_pallete.dart';
+import '../../../playlists/view/widgets/add_to_playlist_sheet.dart';
 import '../../model/song_model.dart';
 
 class SearchSongTile extends StatelessWidget {
@@ -92,6 +93,18 @@ class SearchSongTile extends StatelessWidget {
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
                   color: isLiked ? Pallete.gradient2 : Pallete.subtitleText,
+                ),
+              ),
+              const SizedBox(width: 10),
+              IconButton(
+                iconSize: 22,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Add to playlist',
+                onPressed: () => showAddToPlaylistSheet(context, song),
+                icon: const Icon(
+                  Icons.playlist_add_rounded,
+                  color: Pallete.subtitleText,
                 ),
               ),
               const SizedBox(width: 10),

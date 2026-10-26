@@ -27,6 +27,39 @@ class MusicAudioHandler extends BaseAudioHandler with SeekHandler {
     _broadcastPlaybackState();
   }
 
+  bool _roomPlaceholderActive = false;
+
+  /// Shows a "waiting" notification in a room with nothing loaded, so the foreground
+  /// service (and room sync) survives screen-off. A real song replaces it.
+  void setRoomPlaceholder(bool active) {
+    _roomPlaceholderActive = active;
+    if (player.processingState != ProcessingState.idle) return;
+    if (active) {
+      _broadcastRoomPlaceholder();
+    } else {
+      stop();
+    }
+  }
+
+  void _broadcastRoomPlaceholder() {
+    mediaItem.add(
+      const MediaItem(
+        id: 'dirito_room',
+        title: 'Listening room',
+        artist: 'Waiting for the next song',
+      ),
+    );
+    playbackState.add(
+      PlaybackState(
+        controls: [MediaControl.stop],
+        systemActions: const {MediaAction.stop},
+        androidCompactActionIndices: const [0],
+        processingState: AudioProcessingState.ready,
+        playing: true,
+      ),
+    );
+  }
+
   void _initStreams() {
     // Listen to playback event changes (position, buffered position, processing state)
     player.playbackEventStream.listen((event) {
@@ -72,6 +105,10 @@ class MusicAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   void _broadcastPlaybackState() {
+    if (_roomPlaceholderActive && player.processingState == ProcessingState.idle) {
+      _broadcastRoomPlaceholder();
+      return;
+    }
     final isLiked = _currentSong != null &&
         FavoritesService().isLiked(_currentSong!.id);
 

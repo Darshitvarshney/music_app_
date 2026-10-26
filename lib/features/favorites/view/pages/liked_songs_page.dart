@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/services/music_player_service.dart';
 import '../../../../core/theme/app_pallete.dart';
+import '../../../playlists/view/widgets/add_to_playlist_sheet.dart';
 import '../../../search/model/song_model.dart';
 
 class LikedSongsPage extends StatefulWidget {
@@ -563,6 +564,20 @@ class _LikedSongsPageState extends State<LikedSongsPage> {
                 icon: const Icon(
                   Icons.favorite_rounded,
                   color: Pallete.gradient2,
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // Add to playlist
+              IconButton(
+                iconSize: 22,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Add to playlist',
+                onPressed: () => showAddToPlaylistSheet(context, song),
+                icon: const Icon(
+                  Icons.playlist_add_rounded,
+                  color: Pallete.subtitleText,
                 ),
               ),
               const SizedBox(width: 12),

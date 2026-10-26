@@ -51,7 +51,8 @@ class MusicPlayerService extends ChangeNotifier {
           androidNotificationChannelId: 'com.example.client.channel.audio',
           androidNotificationChannelName: 'Music Playback',
           androidNotificationOngoing: false,
-          androidStopForegroundOnPause: true,
+          // Stay a foreground service while paused so listening rooms keep syncing with the screen off
+          androidStopForegroundOnPause: false,
           androidNotificationIcon: 'drawable/ic_music_notification',
         ),
       );
@@ -92,6 +93,16 @@ class MusicPlayerService extends ChangeNotifier {
   bool get hasNext => _queue.isNotEmpty && _queueIndex + 1 < _queue.length;
   bool get hasPrevious => _queue.isNotEmpty && _queueIndex > 0;
   bool get autoplayEnabled => _autoplayEnabled;
+
+  /// True while moving to the next song because the previous one ended (not a manual tap/skip).
+  bool _autoAdvancing = false;
+  bool get isAutoAdvancing => _autoAdvancing;
+
+  /// Listening rooms: keeps the audio foreground service alive so the app can keep syncing
+  /// when nothing is playing and the screen is off.
+  void setRoomKeepAlive(bool active) {
+    _audioHandler?.setRoomPlaceholder(active);
+  }
   bool get isLoopEnabled => _isLoopEnabled;
 
   bool get isPlaying => _isPlaying;
@@ -182,7 +193,8 @@ class MusicPlayerService extends ChangeNotifier {
       _player.play();
       return;
     }
-    playNext(autoTriggered: true);
+    _autoAdvancing = true;
+    playNext(autoTriggered: true).whenComplete(() => _autoAdvancing = false);
   }
 
   void _sendTelemetry(SongModel song, String eventType, {int duration = 0}) {
@@ -212,9 +224,7 @@ class MusicPlayerService extends ChangeNotifier {
     await playSong(_queue[_queueIndex], queue: _queue);
   }
 
-  /// Plays a single song and populates the upcoming autoplay queue dynamically
-  /// using the personalized recommendation backend (/api/recommend) instead of
-  /// static homepage recommendations.
+  /// Plays one song and prefetches personalized autoplay (/api/recommend) behind it.
   Future<void> playSongWithAutoplay(SongModel song) async {
     final bool isAlreadyLoadedInPlayer =
         _loadedSongId == song.id &&

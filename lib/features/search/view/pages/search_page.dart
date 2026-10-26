@@ -2,13 +2,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/services/music_player_service.dart';
+import '../../../../core/services/recent_searches_service.dart';
 import '../../../../core/theme/app_pallete.dart';
+import '../../model/recent_search_model.dart';
 import '../../model/song_model.dart';
 import '../../repositories/search_repository.dart';
 import '../widgets/search_song_tile.dart';
 
 class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
+  /// When set (e.g. opened from Recent Searches), the page runs this search
+  /// immediately and shows a back button.
+  final String? initialQuery;
+
+  const SearchPage({super.key, this.initialQuery});
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -19,6 +25,7 @@ class _SearchPageState extends State<SearchPage> {
   final SearchRepository _searchRepository = SearchRepository();
   final MusicPlayerService _playerService = MusicPlayerService();
   final FavoritesService _favoritesService = FavoritesService();
+  final RecentSearchesService _recentSearches = RecentSearchesService();
 
   Timer? _debounceTimer;
   bool _isLoading = false;
@@ -30,6 +37,17 @@ class _SearchPageState extends State<SearchPage> {
     super.initState();
     _playerService.addListener(_onPlayerStateChanged);
     _favoritesService.addListener(_onPlayerStateChanged);
+    _recentSearches.addListener(_onPlayerStateChanged);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _recentSearches.fetch();
+      final initial = widget.initialQuery?.trim() ?? '';
+      if (initial.isNotEmpty) {
+        _searchController.text = initial;
+        _onSearchSubmitted(initial);
+      }
+    });
   }
 
   @override
@@ -38,6 +56,7 @@ class _SearchPageState extends State<SearchPage> {
     _searchController.dispose();
     _playerService.removeListener(_onPlayerStateChanged);
     _favoritesService.removeListener(_onPlayerStateChanged);
+    _recentSearches.removeListener(_onPlayerStateChanged);
     super.dispose();
   }
 
@@ -65,6 +84,23 @@ class _SearchPageState extends State<SearchPage> {
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       _executeSearch(query.trim());
     });
+  }
+
+  /// Keyboard "search" pressed: search right away and remember the query.
+  void _onSearchSubmitted(String query) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+    _debounceTimer?.cancel();
+    _executeSearch(trimmed);
+    _recentSearches.record(trimmed);
+  }
+
+  void _useRecentSearch(RecentSearchModel search) {
+    _searchController.text = search.query;
+    _searchController.selection = TextSelection.collapsed(
+      offset: search.query.length,
+    );
+    _onSearchSubmitted(search.query);
   }
 
   Future<void> _executeSearch(String query) async {
@@ -107,16 +143,29 @@ class _SearchPageState extends State<SearchPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title & Search Header
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                'Search',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Pallete.whiteColor,
-                  letterSpacing: -0.5,
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  if (widget.initialQuery != null)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Pallete.whiteColor,
+                        size: 22,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  const Text(
+                    'Search',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Pallete.whiteColor,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -135,6 +184,8 @@ class _SearchPageState extends State<SearchPage> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: _onSearchChanged,
+                  onSubmitted: _onSearchSubmitted,
+                  textInputAction: TextInputAction.search,
                   style: const TextStyle(color: Pallete.whiteColor),
                   decoration: InputDecoration(
                     hintText: 'What do you want to listen to?',
@@ -216,7 +267,7 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     if (_searchController.text.trim().isEmpty) {
-      return const SizedBox.shrink();
+      return _buildRecentSearches();
     }
 
     if (_searchResults.isEmpty) {
@@ -261,10 +312,68 @@ class _SearchPageState extends State<SearchPage> {
           isSelected: isSelected,
           isPlaying: isPlaying,
           onTap: () {
+            _recentSearches.record(_searchController.text);
             _playerService.playSong(song);
           },
         );
       },
+    );
+  }
+
+  Widget _buildRecentSearches() {
+    final recent = _recentSearches.searches;
+    if (recent.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Recent searches',
+              style: TextStyle(
+                color: Pallete.whiteColor,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton(
+              onPressed: _recentSearches.clear,
+              child: const Text(
+                'Clear all',
+                style: TextStyle(color: Pallete.subtitleText),
+              ),
+            ),
+          ],
+        ),
+        for (final search in recent)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(
+              Icons.history_rounded,
+              color: Pallete.subtitleText,
+            ),
+            title: Text(
+              search.query,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Pallete.whiteColor),
+            ),
+            trailing: IconButton(
+              icon: const Icon(
+                Icons.close_rounded,
+                color: Pallete.subtitleText,
+                size: 20,
+              ),
+              onPressed: () => _recentSearches.remove(search),
+            ),
+            onTap: () => _useRecentSearch(search),
+          ),
+      ],
     );
   }
 }

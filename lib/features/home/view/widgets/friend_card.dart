@@ -1,20 +1,49 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_pallete.dart';
 
+/// Avatar colours; one is picked per friend from their username so it stays stable.
+const List<List<Color>> friendAvatarGradients = [
+  [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+  [Color(0xFF11998E), Color(0xFF38EF7D)],
+  [Color(0xFFFF416C), Color(0xFFFF4B2B)],
+  [Color(0xFF606C38), Color(0xFF283618)],
+  [Color(0xFFF7971E), Color(0xFFFFD200)],
+  [Color(0xFF00B4DB), Color(0xFF0083B0)],
+];
+
+List<Color> friendGradientFor(String key) {
+  var sum = 0;
+  for (final unit in key.codeUnits) {
+    sum += unit;
+  }
+  return friendAvatarGradients[sum % friendAvatarGradients.length];
+}
+
+/// What a friend card shows. Built from the backend's friend activity.
 class FriendModel {
-  final String id;
+  final String username;
   final String name;
-  final String currentSong;
-  final String artist;
+
+  /// One short line: the song title, "Paused • title", "Online", "Offline"...
+  final String statusText;
+
+  /// Green circle.
   final bool isOnline;
+
+  /// True while they are actively playing something (shows the equalizer icon).
+  final bool isListening;
+
+  /// True when there is a shared song we can play ("Tune In").
+  final bool canTuneIn;
   final List<Color> avatarGradient;
 
   const FriendModel({
-    required this.id,
+    required this.username,
     required this.name,
-    required this.currentSong,
-    required this.artist,
+    required this.statusText,
     required this.isOnline,
+    required this.isListening,
+    required this.canTuneIn,
     required this.avatarGradient,
   });
 }
@@ -31,6 +60,8 @@ class FriendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayName = friend.name.isNotEmpty ? friend.name : friend.username;
+
     return Container(
       width: 140,
       margin: const EdgeInsets.only(right: 12),
@@ -78,7 +109,7 @@ class FriendCard extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    friend.name.isNotEmpty ? friend.name[0].toUpperCase() : 'F',
+                    displayName.isNotEmpty ? displayName[0].toUpperCase() : 'F',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -117,7 +148,7 @@ class FriendCard extends StatelessWidget {
 
           // Friend Name
           Text(
-            friend.name,
+            displayName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -127,31 +158,36 @@ class FriendCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 2),
+          Text(
+            '@${friend.username}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 10, color: Pallete.subtitleText),
+          ),
 
-          // Current Song Activity
+          // Current activity
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (friend.isOnline)
+                if (friend.isListening)
                   const Icon(
                     Icons.graphic_eq_rounded,
                     color: Pallete.gradient2,
                     size: 13,
                   ),
-                if (friend.isOnline) const SizedBox(width: 4),
+                if (friend.isListening) const SizedBox(width: 4),
                 Flexible(
                   child: Text(
-                    friend.isOnline ? friend.currentSong : 'Offline',
+                    friend.statusText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11,
-                      color: friend.isOnline
+                      color: friend.isListening
                           ? Pallete.gradient2
                           : Pallete.subtitleText,
-                      fontWeight: friend.isOnline
+                      fontWeight: friend.isListening
                           ? FontWeight.w600
                           : FontWeight.normal,
                     ),
@@ -161,25 +197,25 @@ class FriendCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
 
           // Action Button
           SizedBox(
             width: double.infinity,
             height: 28,
             child: ElevatedButton(
-              onPressed: friend.isOnline ? onListenAlong : null,
+              onPressed: friend.canTuneIn ? onListenAlong : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: friend.isOnline
+                backgroundColor: friend.canTuneIn
                     ? Pallete.gradient1.withAlpha(50)
                     : Pallete.borderColor.withAlpha(50),
-                foregroundColor: friend.isOnline
+                foregroundColor: friend.canTuneIn
                     ? Pallete.gradient2
                     : Pallete.subtitleText,
                 padding: EdgeInsets.zero,
                 elevation: 0,
                 side: BorderSide(
-                  color: friend.isOnline
+                  color: friend.canTuneIn
                       ? Pallete.gradient1.withAlpha(120)
                       : Colors.transparent,
                   width: 1,
@@ -189,7 +225,9 @@ class FriendCard extends StatelessWidget {
                 ),
               ),
               child: Text(
-                friend.isOnline ? 'Tune In' : 'Away',
+                friend.canTuneIn
+                    ? 'Tune In'
+                    : (friend.isOnline ? 'Online' : 'Away'),
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,

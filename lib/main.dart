@@ -44,7 +44,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Music App',
+      title: 'Dirito',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkThemeMode,
       home: const AuthGate(),
