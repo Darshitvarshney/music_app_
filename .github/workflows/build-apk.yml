@@ -20,11 +20,22 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Use the fixed signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            mkdir -p ~/.android
+            echo "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+          else
+            echo "No ANDROID_DEBUG_KEYSTORE_B64 secret, Google sign-in will not work in this build"
+          fi
+
       - run: flutter pub get
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       # Tests are kept local only (git-ignored), so only run them if a test folder exists
       - run: if [ -d test ]; then flutter test; else echo "No test folder, skipping tests"; fi
-      - run: flutter build apk --release
+      - run: flutter build apk --release --dart-define=GOOGLE_SERVER_CLIENT_ID=${{ vars.GOOGLE_SERVER_CLIENT_ID }}
 
       - uses: actions/upload-artifact@v4
         with:

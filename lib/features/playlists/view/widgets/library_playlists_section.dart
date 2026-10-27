@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/playlists_service.dart';
 import '../../../../core/theme/app_pallete.dart';
 import '../../model/playlist_model.dart';
+import '../../viewmodel/playlist_import_controller.dart';
+import '../pages/import_playlist_page.dart';
 import '../pages/playlist_detail_page.dart';
 import 'playlist_cover.dart';
 import 'playlist_dialogs.dart';
@@ -46,6 +48,16 @@ class _LibraryPlaylistsSectionState extends State<LibraryPlaylistsSection> {
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
     }
+  }
+
+  Future<void> _importPlaylist(ImportSource source) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => ImportPlaylistPage(source: source),
+      ),
+    );
+    if (mounted) _service.fetch();
   }
 
   void _open(PlaylistModel playlist) {
@@ -115,6 +127,36 @@ class _LibraryPlaylistsSectionState extends State<LibraryPlaylistsSection> {
           title: 'Create playlist',
           subtitle: 'Make your own with any name',
           onTap: _createPlaylist,
+          trailing: const SizedBox.shrink(),
+        ),
+        _tile(
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Pallete.borderColor,
+            ),
+            child: const Icon(Icons.download_rounded, color: Colors.white, size: 24),
+          ),
+          title: 'Import from YouTube Music',
+          subtitle: 'Bring a playlist over with its link',
+          onTap: () => _importPlaylist(ImportSource.youtube),
+          trailing: const SizedBox.shrink(),
+        ),
+        _tile(
+          leading: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Pallete.borderColor,
+            ),
+            child: const Icon(Icons.queue_music_rounded, color: Colors.white, size: 24),
+          ),
+          title: 'Import from Spotify',
+          subtitle: 'Paste a link or upload a file',
+          onTap: () => _importPlaylist(ImportSource.spotify),
           trailing: const SizedBox.shrink(),
         ),
         if (_service.isLoading && playlists.isEmpty)
