@@ -28,11 +28,13 @@ class MusicAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   bool _roomPlaceholderActive = false;
+  bool _placeholderForSync = false;
 
-  /// Shows a "waiting" notification in a room with nothing loaded, so the foreground
-  /// service (and room sync) survives screen-off. A real song replaces it.
-  void setRoomPlaceholder(bool active) {
+  /// Shows a "waiting" notification in a room (or with device sync on) and nothing loaded,
+  /// so the foreground service and syncing survive screen-off. A real song replaces it.
+  void setRoomPlaceholder(bool active, {bool forDeviceSync = false}) {
     _roomPlaceholderActive = active;
+    _placeholderForSync = forDeviceSync;
     if (player.processingState != ProcessingState.idle) return;
     if (active) {
       _broadcastRoomPlaceholder();
@@ -43,9 +45,9 @@ class MusicAudioHandler extends BaseAudioHandler with SeekHandler {
 
   void _broadcastRoomPlaceholder() {
     mediaItem.add(
-      const MediaItem(
-        id: 'dirito_room',
-        title: 'Listening room',
+      MediaItem(
+        id: _placeholderForSync ? 'dirito_device_sync' : 'dirito_room',
+        title: _placeholderForSync ? 'Device sync' : 'Listening room',
         artist: 'Waiting for the next song',
       ),
     );

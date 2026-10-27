@@ -101,7 +101,24 @@ class MusicPlayerService extends ChangeNotifier {
   /// Listening rooms: keeps the audio foreground service alive so the app can keep syncing
   /// when nothing is playing and the screen is off.
   void setRoomKeepAlive(bool active) {
-    _audioHandler?.setRoomPlaceholder(active);
+    _roomKeepAlive = active;
+    _updateKeepAlive();
+  }
+
+  /// Device sync: same idea as [setRoomKeepAlive]; the service stays up while either is on.
+  void setDeviceSyncKeepAlive(bool active) {
+    _syncKeepAlive = active;
+    _updateKeepAlive();
+  }
+
+  bool _roomKeepAlive = false;
+  bool _syncKeepAlive = false;
+
+  void _updateKeepAlive() {
+    _audioHandler?.setRoomPlaceholder(
+      _roomKeepAlive || _syncKeepAlive,
+      forDeviceSync: !_roomKeepAlive && _syncKeepAlive,
+    );
   }
   bool get isLoopEnabled => _isLoopEnabled;
 
@@ -250,7 +267,44 @@ class MusicPlayerService extends ChangeNotifier {
     await _fetchAutoplayQueue(andPlay: false);
   }
 
-  Future<void> playSong(SongModel song, {List<SongModel>? queue}) async {
+  /// Device sync: puts this phone on [song] at [position] and play/pause as asked, without
+  /// toggling or restarting a song that is already loaded. [position] is read late, after loading.
+  Future<void> applySyncedState(
+    SongModel song, {
+    required bool playing,
+    required Duration Function() position,
+  }) async {
+    final bool loaded = _loadedSongId == song.id &&
+        _player.audioSource != null &&
+        _player.processingState != ProcessingState.idle;
+    if (!loaded) {
+      await playSong(
+        song,
+        queue: <SongModel>[song],
+        startAt: position,
+        startPlaying: playing,
+      );
+      return;
+    }
+
+    final Duration target = position();
+    final int driftMs = (_position - target).inMilliseconds.abs();
+    if (driftMs > 400 || _player.processingState == ProcessingState.completed) {
+      await _player.seek(target);
+    }
+    if (playing && !_isPlaying) {
+      unawaited(_player.play());
+    } else if (!playing && _isPlaying) {
+      await _player.pause();
+    }
+  }
+
+  Future<void> playSong(
+    SongModel song, {
+    List<SongModel>? queue,
+    Duration Function()? startAt,
+    bool startPlaying = true,
+  }) async {
     if (queue != null && queue.isNotEmpty) {
       _queue = List<SongModel>.from(queue);
       final idx = _queue.indexWhere((s) => s.id == song.id);
@@ -383,13 +437,21 @@ class MusicPlayerService extends ChangeNotifier {
           await _player.setLoopMode(_isLoopEnabled ? LoopMode.one : LoopMode.off);
         } catch (_) {}
 
-        await _player.play();
+        final Duration? resumeAt = startAt?.call();
+        if (resumeAt != null && resumeAt > Duration.zero) {
+          try {
+            await _player.seek(resumeAt);
+          } catch (_) {}
+        }
+        if (startPlaying) await _player.play();
 
         _activeTelemetrySong = activeSong;
-        if (isReplay) {
-          _sendTelemetry(activeSong, 'replayed', duration: activeSong.duration);
-        } else {
-          _sendTelemetry(activeSong, 'played', duration: 0);
+        if (startPlaying) {
+          if (isReplay) {
+            _sendTelemetry(activeSong, 'replayed', duration: activeSong.duration);
+          } else {
+            _sendTelemetry(activeSong, 'played', duration: 0);
+          }
         }
 
         // Prefetch recommendations if queue is running low

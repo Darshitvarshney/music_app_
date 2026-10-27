@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/models/recommendation_models.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/services/device_sync_service.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/services/friends_service.dart';
 import '../../../../core/services/music_player_service.dart';
@@ -16,6 +17,7 @@ import '../../../../core/theme/app_pallete.dart';
 import '../../../auth/model/user_model.dart';
 import '../../../auth/repositories/auth_local_repository.dart';
 import '../../../auth/view/pages/login_page.dart';
+import '../../../device_sync/view/widgets/device_sync_card.dart';
 import '../../../favorites/view/pages/liked_songs_page.dart';
 import '../../../friends/model/friend_models.dart';
 import '../../../profile/model/profile_model.dart';
@@ -87,6 +89,7 @@ class _HomePageState extends State<HomePage>
       PresenceService().start(); // "online" green circle for friends
       NowPlayingReporter().start(); // lets friends see what you are playing
       RoomService().start(); // invites + listening-room sync
+      DeviceSyncService().start(); // reports playback; follows other devices when the switch is on
       _syncFriendsPolling();
     });
   }
@@ -96,6 +99,7 @@ class _HomePageState extends State<HomePage>
     // Only count as online while the app is in the foreground (also keeps request volume low).
     _appInForeground = state == AppLifecycleState.resumed;
     RoomService().setAppForeground(_appInForeground); // rooms keep syncing in the background
+    DeviceSyncService().setAppForeground(_appInForeground);
     if (_appInForeground) {
       PresenceService().start();
     } else {
@@ -123,6 +127,7 @@ class _HomePageState extends State<HomePage>
     _friendsService.removeListener(_onFriendsChanged);
     _friendsService.stopPolling();
     NowPlayingReporter().stop();
+    DeviceSyncService().stop();
     PresenceService().stop();
     _refreshSpinController.dispose();
     super.dispose();
@@ -262,6 +267,7 @@ class _HomePageState extends State<HomePage>
       await RoomService().leave(); // while the token is still valid
       await AuthLocalRepository().clear();
       RoomService().reset();
+      DeviceSyncService().reset();
       RecentSearchesService().reset();
       PresenceService().stop();
       FriendsService().reset();
@@ -883,6 +889,11 @@ class _HomePageState extends State<HomePage>
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 12),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: DeviceSyncCard(),
           ),
           const SizedBox(height: 20),
 
